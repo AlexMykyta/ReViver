@@ -49,7 +49,6 @@ export default function VolunteerLayout({
     { name: "Dashboard", href: "/volunteer", icon: LayoutDashboard },
     { name: "Doações", href: "/volunteer/donations", icon: Gift },
     { name: "Pedidos", href: "/volunteer/requests", icon: ShoppingCart },
-    { name: "Configurações", href: "/volunteer/settings", icon: Settings },
   ]
 
   return (
@@ -59,7 +58,7 @@ export default function VolunteerLayout({
         <div className="flex h-14 items-center border-b px-4">
           <Link href="/volunteer" className="flex items-center gap-2 font-semibold">
             <Gift className="h-6 w-6" />
-            <span>DonateHub Voluntário</span>
+            <span>ReViver Voluntário</span>
           </Link>
         </div>
         <nav className="flex-1 overflow-auto py-4">
@@ -113,7 +112,7 @@ export default function VolunteerLayout({
             <div className="flex h-14 items-center border-b px-4">
               <Link href="/volunteer" className="flex items-center gap-2 font-semibold" onClick={() => setOpen(false)}>
                 <Gift className="h-6 w-6" />
-                <span>DonateHub Voluntário</span>
+                <span>ReViver Voluntário</span>
               </Link>
               <Button variant="ghost" size="icon" className="ml-auto" onClick={() => setOpen(false)}>
                 <X className="h-5 w-5" />

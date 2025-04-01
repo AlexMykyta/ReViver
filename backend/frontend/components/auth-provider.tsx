@@ -29,9 +29,10 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
 
-  // Check for saved user on initial load
   useEffect(() => {
     const savedUser = localStorage.getItem("user")
+    console.log("Usuário salvo no localStorage:", savedUser)
+
     if (savedUser) {
       const parsedUser = JSON.parse(savedUser)
       setUser(parsedUser)
@@ -41,78 +42,86 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setIsLoading(false)
   }, [])
 
-  // Login function - in a real app, this would call an API
+  const roleMap = {
+    1: "user",
+    2: "volunteer",
+    3: "admin"
+  }
+
   const login = async (email: string, password: string) => {
-    // Simulate API call
     setIsLoading(true)
 
-    // Simple validation
-    if (!email || !password) {
+    const response = await fetch("http://localhost:8000/api/login", {
+      method: "POST",
+      body: JSON.stringify({ email, password }),
+      headers: { "Content-Type": "application/json" }
+    })
+
+    if (!response.ok) {
       setIsLoading(false)
       return false
     }
 
-    // For demo purposes, set roles based on email
-    const isAdminUser = email.toLowerCase() === "admin@example.com"
-    const isVolunteerUser = email.toLowerCase() === "voluntario@example.com" || isAdminUser
+    const data = await response.json()
+    console.log("Resposta da API:", data)
 
-    // Simulate successful login
-    const mockUser = {
-      id: "user-1",
-      name: isAdminUser ? "Administrador" : isVolunteerUser ? "Voluntário" : email.split("@")[0],
-      email,
-      role: isAdminUser ? ("admin" as UserRole) : isVolunteerUser ? ("volunteer" as UserRole) : ("user" as UserRole),
+    const loggedUser = {
+      id: data.user.id,
+      name: data.user.name || email.split("@")[0],
+      email: data.user.email,
+      role: roleMap[data.user.role] || "user"
     }
 
-    // Save to state and localStorage
-    setUser(mockUser)
-    setIsAdmin(isAdminUser)
-    setIsVolunteer(isVolunteerUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
+    setUser(loggedUser)
+    setIsAdmin(loggedUser.role === "admin")
+    setIsVolunteer(loggedUser.role === "volunteer" || loggedUser.role === "admin")
+    localStorage.setItem("user", JSON.stringify(loggedUser))
 
     setIsLoading(false)
+    window.location.reload()
     return true
   }
 
-  // Register function - in a real app, this would call an API
   const register = async (name: string, email: string, password: string) => {
-    // Simulate API call
     setIsLoading(true)
 
-    // Simple validation
-    if (!name || !email || !password) {
+    const response = await fetch("/api/register", {
+      method: "POST",
+      body: JSON.stringify({ name, email, password }),
+      headers: { "Content-Type": "application/json" }
+    })
+
+    if (!response.ok) {
       setIsLoading(false)
       return false
     }
 
-    // For demo purposes, set roles based on email
-    const isAdminUser = email.toLowerCase() === "admin@example.com"
-    const isVolunteerUser = email.toLowerCase() === "voluntario@example.com" || isAdminUser
+    const data = await response.json()
+    console.log("Resposta da API (Registro):", data)
 
-    // Simulate successful registration
-    const mockUser = {
-      id: "user-" + Date.now(),
-      name,
-      email,
-      role: isAdminUser ? ("admin" as UserRole) : isVolunteerUser ? ("volunteer" as UserRole) : ("user" as UserRole),
+    const newUser = {
+      id: data.user.id,
+      name: data.user.name,
+      email: data.user.email,
+      role: roleMap[data.user.role] || "user"
     }
 
-    // Save to state and localStorage
-    setUser(mockUser)
-    setIsAdmin(isAdminUser)
-    setIsVolunteer(isVolunteerUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
+    setUser(newUser)
+    setIsAdmin(newUser.role === "admin")
+    setIsVolunteer(newUser.role === "volunteer" || newUser.role === "admin")
+    localStorage.setItem("user", JSON.stringify(newUser))
 
     setIsLoading(false)
+    window.location.reload()
     return true
   }
 
-  // Logout function
   const logout = () => {
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
     localStorage.removeItem("user")
+    window.location.reload()
   }
 
   return (
@@ -129,4 +138,3 @@ export function useAuth() {
   }
   return context
 }
-

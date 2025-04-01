@@ -14,7 +14,7 @@ export default function NewDonationPage() {
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <span>DonateHub</span>
+          <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
           <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">
@@ -110,7 +110,7 @@ export default function NewDonationPage() {
         </Card>
       </main>
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t px-4 md:px-6">
-        <p className="text-xs text-muted-foreground">© 2025 DonateHub. Todos os direitos reservados.</p>
+        <p className="text-xs text-muted-foreground">© 2025 ReViver. Todos os direitos reservados.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
           <Link href="/terms" className="text-xs hover:underline underline-offset-4">
             Termos de Uso
