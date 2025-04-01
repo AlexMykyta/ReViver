@@ -27,7 +27,7 @@ use App\Http\Controllers\MarketplaceController;
 
 
 Route::middleware('auth:sanctum')->group(function () {
-    
+    Route::get('/user',[AuthController::class,'getUser']);
 });
 
 

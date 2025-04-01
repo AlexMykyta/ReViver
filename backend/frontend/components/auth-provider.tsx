@@ -13,12 +13,13 @@ type User = {
 
 type AuthContextType = {
   user: User
-  login: (email: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
   isAdmin: boolean
   isVolunteer: boolean
+  setUser: (user: User) => void
+  setIsAdmin: (isAdmin: boolean) => void
+  setIsVolunteer: (isVolunteer: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -29,103 +30,52 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
 
+  // Check for token and fetch user data on initial load
   useEffect(() => {
-    const savedUser = localStorage.getItem("user")
-    console.log("Usuário salvo no localStorage:", savedUser)
-
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser)
-      setUser(parsedUser)
-      setIsAdmin(parsedUser.role === "admin")
-      setIsVolunteer(parsedUser.role === "volunteer" || parsedUser.role === "admin")
+    const token = localStorage.getItem("auth_token")
+    if (token) {
+      fetchUserFromAPI(token)
+    } else {
+      setIsLoading(false) 
     }
-    setIsLoading(false)
   }, [])
 
-  const roleMap = {
-    1: "user",
-    2: "volunteer",
-    3: "admin"
-  }
+  // Fetch user data from API using the token
+  const fetchUserFromAPI = async (token: string) => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      })
 
-  const login = async (email: string, password: string) => {
-    setIsLoading(true)
-
-    const response = await fetch("http://localhost:8000/api/login", {
-      method: "POST",
-      body: JSON.stringify({ email, password }),
-      headers: { "Content-Type": "application/json" }
-    })
-
-    if (!response.ok) {
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+        setIsAdmin(data.role_id === 3)
+        setIsVolunteer(data.role_id === 2)
+      } else {
+        console.error("Failed to fetch user data.")
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error)
+    } finally {
       setIsLoading(false)
-      return false
     }
-
-    const data = await response.json()
-    console.log("Resposta da API:", data)
-
-    const loggedUser = {
-      id: data.user.id,
-      name: data.user.name || email.split("@")[0],
-      email: data.user.email,
-      role: roleMap[data.user.role] || "user"
-    }
-
-    setUser(loggedUser)
-    setIsAdmin(loggedUser.role === "admin")
-    setIsVolunteer(loggedUser.role === "volunteer" || loggedUser.role === "admin")
-    localStorage.setItem("user", JSON.stringify(loggedUser))
-
-    setIsLoading(false)
-    window.location.reload()
-    return true
   }
 
-  const register = async (name: string, email: string, password: string) => {
-    setIsLoading(true)
-
-    const response = await fetch("/api/register", {
-      method: "POST",
-      body: JSON.stringify({ name, email, password }),
-      headers: { "Content-Type": "application/json" }
-    })
-
-    if (!response.ok) {
-      setIsLoading(false)
-      return false
-    }
-
-    const data = await response.json()
-    console.log("Resposta da API (Registro):", data)
-
-    const newUser = {
-      id: data.user.id,
-      name: data.user.name,
-      email: data.user.email,
-      role: roleMap[data.user.role] || "user"
-    }
-
-    setUser(newUser)
-    setIsAdmin(newUser.role === "admin")
-    setIsVolunteer(newUser.role === "volunteer" || newUser.role === "admin")
-    localStorage.setItem("user", JSON.stringify(newUser))
-
-    setIsLoading(false)
-    window.location.reload()
-    return true
-  }
-
+  // Logout function
   const logout = () => {
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
-    localStorage.removeItem("user")
-    window.location.reload()
+    localStorage.removeItem("auth_token") // Remove token from localStorage
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAdmin, isVolunteer }}>
+    <AuthContext.Provider value={{ user, logout, isLoading, isAdmin, isVolunteer, setUser, setIsAdmin, setIsVolunteer }}>
       {children}
     </AuthContext.Provider>
   )
