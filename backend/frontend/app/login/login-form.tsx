@@ -85,7 +85,7 @@ export function LoginForm() {
         <div className="flex items-center justify-between">
           <Label htmlFor="password">Senha</Label>
           <Link href="/reset-password" className="text-xs text-primary hover:underline">
-            Esqueceu a senha?
+            Esqueceu a palavra-pass?
           </Link>
         </div>
         <Input id="password" type="password" required value={password} onChange={(e) => setPassword(e.target.value)} />
