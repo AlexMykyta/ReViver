@@ -13,12 +13,13 @@ type User = {
 
 type AuthContextType = {
   user: User
-  login: (email: string, password: string) => Promise<boolean>
-  register: (name: string, email: string, password: string) => Promise<boolean>
   logout: () => void
   isLoading: boolean
   isAdmin: boolean
   isVolunteer: boolean
+  setUser: (user: User) => void
+  setIsAdmin: (isAdmin: boolean) => void
+  setIsVolunteer: (isVolunteer: boolean) => void
 }
 
 const AuthContext = createContext<AuthContextType | undefined>(undefined)
@@ -29,82 +30,40 @@ export function AuthProvider({ children }: { children: ReactNode }) {
   const [isAdmin, setIsAdmin] = useState(false)
   const [isVolunteer, setIsVolunteer] = useState(false)
 
-  // Check for saved user on initial load
+  // Check for token and fetch user data on initial load
   useEffect(() => {
-    const savedUser = localStorage.getItem("user")
-    if (savedUser) {
-      const parsedUser = JSON.parse(savedUser)
-      setUser(parsedUser)
-      setIsAdmin(parsedUser.role === "admin")
-      setIsVolunteer(parsedUser.role === "volunteer" || parsedUser.role === "admin")
+    const token = localStorage.getItem("auth_token")
+    if (token) {
+      fetchUserFromAPI(token)
+    } else {
+      setIsLoading(false) 
     }
-    setIsLoading(false)
   }, [])
 
-  // Login function - in a real app, this would call an API
-  const login = async (email: string, password: string) => {
-    // Simulate API call
-    setIsLoading(true)
+  // Fetch user data from API using the token
+  const fetchUserFromAPI = async (token: string) => {
+    try {
+      const response = await fetch("http://127.0.0.1:8000/api/user", {
+        method: "GET",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`,
+        },
+      })
 
-    // Simple validation
-    if (!email || !password) {
+      if (response.ok) {
+        const data = await response.json()
+        setUser(data)
+        setIsAdmin(data.role_id === 3)
+        setIsVolunteer(data.role_id === 2)
+      } else {
+        console.error("Failed to fetch user data.")
+      }
+    } catch (error) {
+      console.error("Error fetching user data:", error)
+    } finally {
       setIsLoading(false)
-      return false
     }
-
-    // For demo purposes, set roles based on email
-    const isAdminUser = email.toLowerCase() === "admin@example.com"
-    const isVolunteerUser = email.toLowerCase() === "voluntario@example.com" || isAdminUser
-
-    // Simulate successful login
-    const mockUser = {
-      id: "user-1",
-      name: isAdminUser ? "Administrador" : isVolunteerUser ? "Voluntário" : email.split("@")[0],
-      email,
-      role: isAdminUser ? ("admin" as UserRole) : isVolunteerUser ? ("volunteer" as UserRole) : ("user" as UserRole),
-    }
-
-    // Save to state and localStorage
-    setUser(mockUser)
-    setIsAdmin(isAdminUser)
-    setIsVolunteer(isVolunteerUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
-
-    setIsLoading(false)
-    return true
-  }
-
-  // Register function - in a real app, this would call an API
-  const register = async (name: string, email: string, password: string) => {
-    // Simulate API call
-    setIsLoading(true)
-
-    // Simple validation
-    if (!name || !email || !password) {
-      setIsLoading(false)
-      return false
-    }
-
-    // For demo purposes, set roles based on email
-    const isAdminUser = email.toLowerCase() === "admin@example.com"
-    const isVolunteerUser = email.toLowerCase() === "voluntario@example.com" || isAdminUser
-
-    // Simulate successful registration
-    const mockUser = {
-      id: "user-" + Date.now(),
-      name,
-      email,
-      role: isAdminUser ? ("admin" as UserRole) : isVolunteerUser ? ("volunteer" as UserRole) : ("user" as UserRole),
-    }
-
-    // Save to state and localStorage
-    setUser(mockUser)
-    setIsAdmin(isAdminUser)
-    setIsVolunteer(isVolunteerUser)
-    localStorage.setItem("user", JSON.stringify(mockUser))
-
-    setIsLoading(false)
-    return true
   }
 
   // Logout function
@@ -112,11 +71,11 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
-    localStorage.removeItem("user")
+    localStorage.removeItem("auth_token") // Remove token from localStorage
   }
 
   return (
-    <AuthContext.Provider value={{ user, login, register, logout, isLoading, isAdmin, isVolunteer }}>
+    <AuthContext.Provider value={{ user, logout, isLoading, isAdmin, isVolunteer, setUser, setIsAdmin, setIsVolunteer }}>
       {children}
     </AuthContext.Provider>
   )
@@ -129,4 +88,3 @@ export function useAuth() {
   }
   return context
 }
-

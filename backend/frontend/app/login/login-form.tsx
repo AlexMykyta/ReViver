@@ -1,16 +1,15 @@
 "use client"
 
 import type React from "react"
-
 import { useState } from "react"
 import { useRouter } from "next/navigation"
 import Link from "next/link"
-
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Checkbox } from "@/components/ui/checkbox"
 import { useToast } from "@/components/ui/use-toast"
+import { useAuth } from "@/components/auth-provider"
 
 export function LoginForm() {
   const [email, setEmail] = useState("")
@@ -20,6 +19,7 @@ export function LoginForm() {
 
   const { toast } = useToast()
   const router = useRouter()
+  const { setUser, setIsAdmin, setIsVolunteer } = useAuth()
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -37,12 +37,19 @@ export function LoginForm() {
       const data = await response.json()
 
       if (response.ok) {
+        localStorage.setItem("auth_token", data.token)
+
+        // Set user data in AuthContext
+        setUser(data.user)
+        setIsAdmin(data.user.role_id === 3)
+        setIsVolunteer(data.user.role_id === 2)
         toast({
           title: "Login realizado com sucesso!",
-          description: "Você será redirecionado para a página inicial.",
+          description: "Você será redirecionado para a página do dashboard.",
           variant: "default",
         })
-        router.push("/")
+
+        router.push("/")  
       } else {
         toast({
           title: "Erro ao fazer login",
