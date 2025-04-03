@@ -23,9 +23,6 @@ export default function NewDonationPage() {
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
           </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
-          </Link>
           <UserNav />
         </nav>
       </header>
@@ -39,7 +36,7 @@ export default function NewDonationPage() {
             Voltar para doações
           </Link>
           <h1 className="text-3xl font-bold tracking-tight">Nova Doação</h1>
-          <p className="text-muted-foreground">Preencha o formulário abaixo para cadastrar um novo item para doação</p>
+          <p className="text-muted-foreground">Preencha o formulário abaixo para registar um novo item para doação</p>
         </div>
 
         <Card>

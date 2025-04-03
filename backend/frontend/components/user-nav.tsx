@@ -101,7 +101,7 @@ export function UserNav() {
             </Button>
           </Link>
           <Link href="/register">
-            <Button size="sm">Cadastrar</Button>
+            <Button size="sm">Registar</Button>
           </Link>
         </div>
       )}
