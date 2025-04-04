@@ -17,7 +17,7 @@ export default function HomePage() {
             Doações
           </Link>
           <Link href="/volunteers" className="text-sm font-medium hover:underline underline-offset-4">
-            Voluntários
+            Ser Voluntário
           </Link>
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
