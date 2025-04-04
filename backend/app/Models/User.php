@@ -21,6 +21,7 @@ class User extends Authenticatable
         'contact',
         'availability'
     ];
+    public $timestamps = false;
 
     protected $hidden = [
         'password',
