@@ -61,7 +61,7 @@ export default function ApprovalsPage() {
         throw new Error("Sessão expirada. Faça login novamente.")
       }
       try {
-        const response = await fetch("http://localhost:8000/api/volunteer-requests/getAll", {
+        const response = await fetch("http://localhost:8000/api/volunteer-requests/getPedding", {
           method: "GET",
           headers: { Authorization: `Bearer ${token}` },
         })
@@ -114,31 +114,95 @@ export default function ApprovalsPage() {
     })
   }
 
-  const handleApproveVolunteer = (id: number) => {
-    setVolunteers(
-      volunteers.map((volunteer) =>
-        volunteer.id === id ? { ...volunteer, status: "aprovado" } : volunteer
-      )
-    )
-    toast({
-      title: "Voluntário aprovado",
-      description: "O voluntário foi aprovado com sucesso.",
-      variant: "default",
-    })
-  }
-
-  const handleRejectVolunteer = (id: number) => {
-    setVolunteers(
-      volunteers.map((volunteer) =>
-        volunteer.id === id ? { ...volunteer, status: "rejeitado" } : volunteer
-      )
-    )
-    toast({
-      title: "Voluntário rejeitado",
-      description: "O voluntário foi rejeitado.",
-      variant: "destructive",
-    })
-  }
+  const handleApproveVolunteer = async (id: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({ title: "Erro", description: "Faça login novamente", variant: "destructive" });
+        return;
+      }
+  
+      const response = await fetch('http://localhost:8000/api/volunteer-requests/updateStatus', {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          id: id,
+          status: "aprovado" 
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao aprovar voluntário");
+      }
+  
+      setVolunteers(volunteers.map(v => 
+        v.id === id ? { ...v, status: "aprovado" } : v
+      ));
+  
+      toast({ 
+        title: "Sucesso", 
+        description: "Voluntário aprovado com sucesso",
+        variant: "default" 
+      });
+  
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleRejectVolunteer = async (id: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({ title: "Erro", description: "Faça login novamente", variant: "destructive" });
+        return;
+      }
+  
+      const response = await fetch('http://localhost:8000/api/volunteer-requests/updateStatus', {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          id: id,
+          status: "rejeitado" 
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao rejeitar voluntário");
+      }
+  
+      setVolunteers(volunteers.map(v => 
+        v.id === id ? { ...v, status: "rejeitado" } : v
+      ));
+  
+      toast({ 
+        title: "Sucesso", 
+        description: "Voluntário rejeitado",
+        variant: "destructive" 
+      });
+  
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
 
   if (!mounted) return null
   if (loading) return <p>Carregando voluntários...</p>

@@ -13,15 +13,12 @@ use App\Http\Controllers\VolunteerRequestController;
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'getUser']);
     
-    // Solicitações para ser voluntário
+    
     Route::post('/volunteer-requests', [VolunteerRequestController::class, 'store']);
-        Route::get('/volunteer-requests/getAll', [VolunteerRequestController::class, 'getAll']);
+    Route::get('/volunteer-requests/getAll', [VolunteerRequestController::class, 'getAll']);
+    Route::get('/volunteer-requests/getPedding', [VolunteerRequestController::class, 'getPedding']);
+    Route::put('/volunteer-requests/updateStatus', [VolunteerRequestController::class, 'updateStatus']);
 
-    // Rotas para admin
-    /*Route::middleware('admin')->group(function () {
-        Route::get('/volunteer-requests', [VolunteerRequestController::class, 'index']);
-        Route::put('/volunteer-requests/{id}', [VolunteerRequestController::class, 'update']);
-    });*/
 });
 
 Route::post('login',[AuthController::class,'login']);

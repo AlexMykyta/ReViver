@@ -70,13 +70,18 @@ class VolunteerRequestController extends Controller
         }
     }
 
-    public function getAll()
-    {
-        $reports = Report::all();
+    public function getPedding(){
+        $reports = Report::where('status', 1)->get();
 
         return response()->json(['reports' => $reports], 200);
     }
 
+
+    public function getAll(){
+        $reports = Report::with(['user', 'userAvailability'])->get();
+
+        return response()->json(['reports' => $reports], 200);
+    }
     /**
      * List all volunteer requests (for admin)
      */
@@ -90,5 +95,49 @@ class VolunteerRequestController extends Controller
             'success' => true,
             'data' => $requests
         ]);
+    }
+
+    
+    
+    public function updateStatus(Request $request)
+    {
+        $user_id = Auth::id();
+        
+
+        $validated = $request->validate([
+            'id' => 'required|integer|exists:report,id',
+            'status' => 'required|string|in:aprovado,rejeitado'
+        ]);
+
+
+        $statusMap = [
+            'aprovado' => 2, 
+            'rejeitado' => 3 
+        ];
+
+        try {
+            $volunteerRequest = Report::findOrFail($validated['id']);
+
+            $volunteerRequest->update([
+                'status' => $statusMap[$validated['status']],
+                'aproved_by' => $user_id,
+            ]);
+
+            return response()->json([
+                'success' => true,
+                'message' => 'Status atualizado com sucesso',
+                'data' => [
+                    'id' => $volunteerRequest->id,
+                    'new_status' => $validated['status'],
+                    'aproved_by' => $user_id
+                ]
+            ]);
+
+        } catch (\Exception $e) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Erro ao atualizar status: ' . $e->getMessage()
+            ], 500);
+        }
     }
 }

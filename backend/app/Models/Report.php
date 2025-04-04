@@ -4,6 +4,9 @@ namespace App\Models;
 
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use App\Models\User;
+use App\Models\UserAvailability;
+
 
 class Report extends Model
 {
@@ -16,17 +19,22 @@ class Report extends Model
         'availability',
         'motivation',
         'status',
-        'approved_by'
+        'aproved_by'
     ];
     public $timestamps = false;
 
     public function user()
     {
-        return $this->belongsTo(User::class);
+        return $this->belongsTo(User::class, 'user_id');
     }
 
     public function approver()
     {
-        return $this->belongsTo(User::class, 'approved_by');
+        return $this->belongsTo(User::class, 'aproved_by');
+    }
+
+    public function userAvailability()
+    {
+        return $this->belongsTo(UserAvailability::class, 'availability');
     }
 }
