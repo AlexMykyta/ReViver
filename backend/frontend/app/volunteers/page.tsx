@@ -1,16 +1,111 @@
+"use client"
+
 import Link from "next/link"
 import { ArrowLeft } from "lucide-react"
+import { useState } from "react"
+import { useRouter } from "next/navigation"
+import { useAuth } from "@/components/auth-provider"
 
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
-import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { Textarea } from "@/components/ui/textarea"
 import { UserNav } from "@/components/user-nav"
 
+type Availability = "weekends" | "weekdays" | "evenings"
+
 export default function VolunteersPage() {
+  const [availability, setAvailability] = useState<Availability>("weekends")
+  const [motivation, setMotivation] = useState("")
+  const [isSubmitting, setIsSubmitting] = useState(false)
+  const [error, setError] = useState<string | null>(null)
+  const router = useRouter()
+  const { user, isLoading: authLoading, logout } = useAuth()
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    
+    // Check authentication state
+    if (authLoading) {
+      setError("Verificando autenticação...")
+      return
+    }
+
+    if (!user) {
+      setError("Por favor, faça login para enviar sua candidatura")
+      return
+    }
+
+    setIsSubmitting(true)
+    setError(null)
+
+    try {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        logout()
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+
+      const apiUrl = process.env.NEXT_PUBLIC_BACKEND_URL || "http://localhost:8000"
+      const response = await fetch(`${apiUrl}/api/volunteer-requests`, {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Accept': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          availability,
+          motivation,
+          role_id: user.role === "volunteer" ? 2 : 1,
+        })
+      })
+
+      // Check if response is JSON
+      const contentType = response.headers.get('content-type')
+      if (!contentType?.includes('application/json')) {
+        const text = await response.text()
+        throw new Error(text || "Resposta inválida do servidor")
+      }
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        if (response.status === 401) {
+          logout()
+          throw new Error("Sessão expirada. Faça login novamente.")
+        }
+        throw new Error(data.message || `Erro ${response.status}: ${response.statusText}`)
+      }
+
+      if (!data.success) {
+        throw new Error(data.message || "Sua candidatura não pôde ser enviada")
+      }
+      router.push('/')
+    } catch (err) {
+      let errorMessage = "Ocorreu um erro inesperado"
+      
+      if (err instanceof Error) {
+        // Handle HTML error pages
+        if (err.message.startsWith("<!DOCTYPE html>")) {
+          errorMessage = "Erro no servidor. Por favor, tente novamente mais tarde."
+        } else {
+          errorMessage = err.message
+          // Clean up Laravel validation errors
+          if (err.message.includes("validation.required")) {
+            errorMessage = "Por favor, preencha todos os campos obrigatórios"
+          }
+        }
+      }
+      
+      setError(errorMessage)
+      console.error("Erro na submissão:", err)
+    } finally {
+      setIsSubmitting(false)
+    }
+  }
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
@@ -24,12 +119,10 @@ export default function VolunteersPage() {
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
           </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
-          </Link>
           <UserNav />
         </nav>
       </header>
+
       <main className="flex-1 container max-w-3xl py-6 md:py-12">
         <div className="mb-8">
           <Link
@@ -45,93 +138,81 @@ export default function VolunteersPage() {
           </p>
         </div>
 
-        <Card>
-          <CardHeader>
-            <CardTitle>Formulário de Candidatura</CardTitle>
-            <CardDescription>Compartilhe suas informações e experiências para ajudar nossa comunidade</CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-6">
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="first-name">Nome</Label>
-                <Input id="first-name" required />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="last-name">Sobrenome</Label>
-                <Input id="last-name" required />
-              </div>
-            </div>
+        <form onSubmit={handleSubmit}>
+          <Card>
+            <CardHeader>
+              <CardTitle>Formulário de Candidatura</CardTitle>
+              <CardDescription>
+                Compartilhe suas informações e experiências para ajudar nossa comunidade
+              </CardDescription>
+            </CardHeader>
 
-            <div className="space-y-2">
-              <Label htmlFor="email">E-mail</Label>
-              <Input id="email" type="email" placeholder="seu@email.com" required />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="phone">Telefone</Label>
-              <Input id="phone" type="tel" placeholder="(00) 00000-0000" required />
-            </div>
-
-            <div className="space-y-2">
-              <Label htmlFor="area">Área de Interesse</Label>
-              <Select>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma área" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="distribution">Distribuição de Doações</SelectItem>
-                  <SelectItem value="logistics">Logística e Transporte</SelectItem>
-                  <SelectItem value="service">Atendimento</SelectItem>
-                  <SelectItem value="organization">Organização de Eventos</SelectItem>
-                  <SelectItem value="other">Outra</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Disponibilidade</Label>
-              <RadioGroup defaultValue="weekends">
-                <div className="flex flex-col space-y-2">
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="weekends" id="weekends" />
-                    <Label htmlFor="weekends">Fins de semana</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="weekdays" id="weekdays" />
-                    <Label htmlFor="weekdays">Dias de semana</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="evenings" id="evenings" />
-                    <Label htmlFor="evenings">Noites</Label>
-                  </div>
-                  <div className="flex items-center space-x-2">
-                    <RadioGroupItem value="flexible" id="flexible" />
-                    <Label htmlFor="flexible">Flexível</Label>
-                  </div>
+            <CardContent className="space-y-6">
+              {error && (
+                <div className="p-4 mb-4 text-sm text-red-700 bg-red-100 rounded-lg">
+                  {error}
                 </div>
-              </RadioGroup>
-            </div>
+              )}
 
-            <div className="space-y-2">
-              <Label htmlFor="experience">Experiência Prévia</Label>
-              <Textarea
-                id="experience"
-                placeholder="Conte-nos sobre sua experiência prévia como voluntário ou em áreas relacionadas"
-                rows={4}
-              />
-            </div>
+              <div className="space-y-2">
+                <Label>Disponibilidade*</Label>
+                <RadioGroup 
+                  value={availability}
+                  onValueChange={(value: Availability) => setAvailability(value)}
+                  required
+                >
+                  <div className="flex flex-col space-y-2">
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="weekends" id="weekends" />
+                      <Label htmlFor="weekends">Fins de semana</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="weekdays" id="weekdays" />
+                      <Label htmlFor="weekdays">Dias de semana</Label>
+                    </div>
+                    <div className="flex items-center space-x-2">
+                      <RadioGroupItem value="evenings" id="evenings" />
+                      <Label htmlFor="evenings">Noites</Label>
+                    </div>
+                  </div>
+                </RadioGroup>
+              </div>
 
-            <div className="space-y-2">
-              <Label htmlFor="motivation">Motivação</Label>
-              <Textarea id="motivation" placeholder="Por que você quer ser voluntário na nossa plataforma?" rows={4} />
-            </div>
-          </CardContent>
-          <CardFooter className="flex justify-between border-t p-6">
-            <Button variant="outline">Cancelar</Button>
-            <Button>Enviar Candidatura</Button>
-          </CardFooter>
-        </Card>
+              <div className="space-y-2">
+                <Label htmlFor="motivation">Motivação*</Label>
+                <Textarea
+                  id="motivation"
+                  placeholder="Por que você quer ser voluntário na nossa plataforma? (mínimo 50 caracteres)"
+                  rows={4}
+                  value={motivation}
+                  onChange={(e) => setMotivation(e.target.value)}
+                  required
+                  minLength={10}
+                />
+              </div>
+            </CardContent>
+
+            <CardFooter className="flex justify-between border-t p-6">
+              <Button 
+                variant="outline" 
+                type="button"
+                onClick={() => router.back()}
+                disabled={isSubmitting}
+              >
+                Cancelar
+              </Button>
+              <Button 
+                type="submit" 
+                disabled={isSubmitting || authLoading}
+                aria-disabled={isSubmitting || authLoading}
+              >
+                {isSubmitting ? "Enviando..." : "Enviar Candidatura"}
+              </Button>
+            </CardFooter>
+          </Card>
+        </form>
       </main>
+
       <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t px-4 md:px-6">
         <p className="text-xs text-muted-foreground">© 2025 ReViver. Todos os direitos reservados.</p>
         <nav className="sm:ml-auto flex gap-4 sm:gap-6">
@@ -146,4 +227,3 @@ export default function VolunteersPage() {
     </div>
   )
 }
-
