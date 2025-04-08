@@ -100,9 +100,6 @@ export default function MyDonationsPage() {
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
           </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
-          </Link>
           <UserNav />
         </nav>
       </header>
