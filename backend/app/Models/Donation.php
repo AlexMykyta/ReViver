@@ -2,35 +2,33 @@
 
 namespace App\Models;
 
+use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Donation extends Model
+
 {
+    protected $table = 'donation'; // <- adiciona esta linha
+
+    use HasFactory;
+
+    public $timestamps = false;
+
     protected $primaryKey = 'donation_id';
+
     protected $fillable = [
-        'user_id',
+        'created_by',
         'date',
-        'total_value',
-        'status_id'
+        'status_id',
+        'category_id',
+        'title',
+        'description',
+        'document',
+        'contact',
     ];
 
-    public function user()
-    {
-        return $this->belongsTo(User::class, 'user_id');
-    }
-
-    public function status()
-    {
-        return $this->belongsTo(DonationStatus::class, 'status_id');
-    }
-
-    public function items()
-    {
-        return $this->hasMany(Item::class, 'donation_id');
-    }
-
-    public function feedbacks()
-    {
-        return $this->hasMany(Feedback::class, 'donation_id');
-    }
+    public function donor()
+{
+    return $this->belongsTo(\App\Models\User::class, 'created_by', 'user_id');
+}
 }
