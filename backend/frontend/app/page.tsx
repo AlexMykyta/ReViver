@@ -49,7 +49,8 @@ export default function HomePage() {
                   </Link>
                   <Link href="/donations/new">
                     <Button variant="outline" size="lg" className="w-full sm:w-auto">
-                      Doar item
+                      Doar Forneça detalhes sobre o item que você deseja doar
+
                     </Button>
                   </Link>
                 </div>

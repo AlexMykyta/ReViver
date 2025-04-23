@@ -1,35 +1,85 @@
-import Link from "next/link"
-import { ArrowLeft, Calendar, Gift, MessageCircle, Share2, User } from "lucide-react"
+"use client"
 
+import { useEffect, useState } from "react"
+import Link from "next/link"
+import { useParams } from "next/navigation"
+import { Gift, ArrowLeft, User, Calendar, Share2, ChevronLeft, ChevronRight } from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
 import { UserNav } from "@/components/user-nav"
 
-export default function DonationDetailsPage({ params }: { params: { id: string } }) {
-  // Em uma aplicação real, você buscaria os detalhes da doação com base no ID
-  // Aqui estamos usando dados de exemplo
-  const donation = {
-    id: params.id,
-    title: "Roupas Infantis",
-    category: "Roupas",
-    description:
-      "Conjunto de roupas infantis em bom estado para crianças de 3-5 anos. Inclui camisetas, calças, shorts e algumas peças de inverno. Todas as peças estão limpas e em bom estado de conservação, sem manchas ou rasgos.",
-    date: "2025-03-16",
-    donor: "João Santos",
-    images: [
-      "/placeholder.svg?height=400&width=600",
-      "/placeholder.svg?height=400&width=600",
-      "/placeholder.svg?height=400&width=600",
-    ],
-    status: "disponível",
-  }
+interface Donation {
+  donation_id: number
+  title: string
+  description: string
+  contact: string
+  date: string
+  document: string
+  category_id: number
+  status_id: number
+  created_by: number
+  donor_name: string 
+}
 
-  // Formatar a data para exibição
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("pt-BR")
-  }
+export default function DonationDetailsPage() {
+  const { id } = useParams()
+  const [donation, setDonation] = useState<Donation | null>(null)
+  const [similarDonations, setSimilarDonations] = useState<Donation[]>([])
+  const [error, setError] = useState("")
+  const [mainImageIndex, setMainImageIndex] = useState(0)
+
+  useEffect(() => {
+    const fetchDonation = async () => {
+      try {
+        const res = await fetch(`http://127.0.0.1:8000/api/donations/${id}`)
+        if (!res.ok) {
+          const data = await res.json()
+          throw new Error(data?.error || "Erro ao carregar detalhes da doação")
+        }
+        const data = await res.json()
+        setDonation(data)
+      } catch (err: any) {
+        setError(err.message)
+      }
+    }
+    fetchDonation()
+  }, [id])
+
+  useEffect(() => {
+    const fetchSimilar = async () => {
+      try {
+        const token = localStorage.getItem("auth_token")
+        const res = await fetch("http://127.0.0.1:8000/api/donations", {
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!res.ok) throw new Error("Erro ao buscar doações")
+        const all = await res.json()
+        const filtered = all.filter(
+          (d: Donation) => d.category_id === donation?.category_id && d.donation_id !== donation?.donation_id
+        ).slice(0, 3)
+        setSimilarDonations(filtered)
+      } catch (err) {
+        console.error("Erro ao buscar itens similares:", err)
+      }
+    }
+    fetchSimilar()
+  }, [donation?.category_id])
+
+  if (error) return <p className="text-red-500">{error}</p>
+  if (!donation) return <p>A carregar...</p>
+
+  const images = (() => {
+    try {
+      const parsed = JSON.parse(donation.document)
+      return Array.isArray(parsed) ? parsed : [parsed]
+    } catch {
+      return donation.document ? [donation.document] : []
+    }
+  })()
+
+  const goPrev = () => setMainImageIndex((prev) => (prev > 0 ? prev - 1 : images.length - 1))
+  const goNext = () => setMainImageIndex((prev) => (prev < images.length - 1 ? prev + 1 : 0))
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -39,130 +89,137 @@ export default function DonationDetailsPage({ params }: { params: { id: string }
           <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">
-            Doações
-          </Link>
-          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
-            Sobre
-          </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
-          </Link>
+          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">Doações</Link>
+          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">Sobre</Link>
+          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">Contato</Link>
           <UserNav />
         </nav>
       </header>
+
       <main className="flex-1 container py-6 md:py-12">
         <div className="mb-8">
-          <Link
-            href="/donations"
-            className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-2"
-          >
+          <Link href="/donations" className="inline-flex items-center text-sm font-medium text-muted-foreground hover:text-primary mb-2">
             <ArrowLeft className="mr-1 h-4 w-4" />
             Voltar para doações
           </Link>
           <h1 className="text-3xl font-bold tracking-tight">{donation.title}</h1>
           <div className="flex items-center gap-2 mt-2">
-            <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">{donation.category}</span>
-            <span className="text-sm text-muted-foreground">Publicado em {formatDate(donation.date)}</span>
+            <span className="text-sm bg-primary/10 text-primary px-2 py-1 rounded-full">
+              Categoria {donation.category_id}
+            </span>
+            <span className="text-sm text-muted-foreground">
+              Publicado em {new Date(donation.date).toLocaleDateString("pt-PT")}
+            </span>
           </div>
         </div>
 
         <div className="grid gap-6 md:grid-cols-[2fr_1fr]">
           <div className="space-y-6">
-            <div className="aspect-video overflow-hidden rounded-lg">
-              <img
-                src={donation.images[0] || "/placeholder.svg"}
-                alt={donation.title}
-                className="object-cover w-full h-full"
-              />
-            </div>
-            <div className="grid grid-cols-3 gap-2">
-              {donation.images.slice(1).map((image, index) => (
-                <div key={index} className="aspect-video overflow-hidden rounded-lg">
-                  <img
-                    src={image || "/placeholder.svg"}
-                    alt={`${donation.title} - imagem ${index + 2}`}
-                    className="object-cover w-full h-full"
-                  />
-                </div>
-              ))}
-            </div>
+            {images.length > 0 && (
+              <div className="relative aspect-video overflow-hidden rounded-lg">
+                <img
+                  src={images[mainImageIndex]}
+                  alt={`Imagem ${mainImageIndex + 1}`}
+                  className="object-cover w-full h-full"
+                />
+                <button onClick={goPrev} className="absolute left-2 top-1/2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 shadow-md">
+                  <ChevronLeft className="h-6 w-6" />
+                </button>
+                <button onClick={goNext} className="absolute right-2 top-1/2 transform -translate-y-1/2 bg-white/70 rounded-full p-1 shadow-md">
+                  <ChevronRight className="h-6 w-6" />
+                </button>
+              </div>
+            )}
+
+            {images.length > 1 && (
+              <div className="flex gap-2 mt-2">
+                {images.map((image, index) => (
+                  <div
+                    key={index}
+                    onClick={() => setMainImageIndex(index)}
+                    className={`cursor-pointer rounded border-2 ${index === mainImageIndex ? "border-primary" : "border-transparent"}`}
+                  >
+                    <img
+                      src={image}
+                      alt={`Imagem ${index + 1}`}
+                      className="w-20 h-14 object-cover rounded"
+                    />
+                  </div>
+                ))}
+              </div>
+            )}
+
             <div className="space-y-4">
               <h2 className="text-2xl font-bold">Descrição</h2>
               <p className="text-muted-foreground">{donation.description}</p>
             </div>
           </div>
+
           <div className="space-y-6">
             <Card>
-              <CardContent className="p-6">
-                <div className="space-y-4">
-                  <div className="flex items-center gap-2">
-                    <User className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">Doador:</span>
-                    <span>{donation.donor}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Calendar className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">Data:</span>
-                    <span>{formatDate(donation.date)}</span>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <Gift className="h-5 w-5 text-muted-foreground" />
-                    <span className="font-medium">Status:</span>
-                    <span className="capitalize">{donation.status}</span>
-                  </div>
-                  <Separator className="my-4" />
-                  <div className="space-y-2">
-                    <Button className="w-full">Solicitar este item</Button>
-                    <Button variant="outline" className="w-full">
-                      <MessageCircle className="mr-2 h-4 w-4" />
-                      Enviar mensagem
-                    </Button>
-                    <Button variant="ghost" className="w-full">
-                      <Share2 className="mr-2 h-4 w-4" />
-                      Compartilhar
-                    </Button>
-                  </div>
+              <CardContent className="p-6 space-y-4">
+                <div className="flex items-center gap-2">
+                  <User className="h-5 w-5 text-muted-foreground" />
+                  <span className="font-medium">Doador:</span>
+                  <span>{donation.donor_name}</span>
                 </div>
+             
+                <Separator className="my-4" />
+                <Button className="w-full">Solicitar Doação</Button>
+
               </CardContent>
             </Card>
-            <Card>
-              <CardContent className="p-6">
-                <h3 className="font-semibold mb-2">Itens similares</h3>
-                <div className="space-y-4">
-                  {[1, 2, 3].map((item) => (
-                    <div key={item} className="flex gap-3">
-                      <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
-                        <img
-                          src="/placeholder.svg?height=64&width=64"
-                          alt="Item similar"
-                          className="object-cover w-full h-full"
-                        />
-                      </div>
-                      <div>
-                        <h4 className="font-medium text-sm">Roupas infantis {item}</h4>
-                        <p className="text-xs text-muted-foreground">Disponível há {item} dias</p>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
+
+            {similarDonations.length > 0 && (
+              <Card>
+                <CardContent className="p-6">
+                  <h3 className="font-semibold mb-2">Itens similares</h3>
+                  <div className="space-y-4">
+                    {similarDonations.map((item) => {
+                      const imgs = (() => {
+                        try {
+                          const parsed = JSON.parse(item.document)
+                          return Array.isArray(parsed) ? parsed : [parsed]
+                        } catch {
+                          return item.document ? [item.document] : []
+                        }
+                      })()
+
+                      return (
+                        <Link
+                          key={item.donation_id}
+                          href={`/donations/${item.donation_id}`}
+                          className="flex gap-3 hover:bg-muted/50 p-2 rounded-md transition"
+                        >
+                          <div className="w-16 h-16 rounded-md overflow-hidden flex-shrink-0">
+                            {imgs[0] ? (
+                              <img
+                                src={imgs[0]}
+                                alt={item.title}
+                                className="object-cover w-full h-full"
+                              />
+                            ) : (
+                              <div className="bg-gray-200 w-full h-full flex items-center justify-center text-xs text-muted-foreground">
+                                Sem imagem
+                              </div>
+                            )}
+                          </div>
+                          <div>
+                            <h4 className="font-medium text-sm">{item.title}</h4>
+                            <p className="text-xs text-muted-foreground">
+                              Publicado em {new Date(item.date).toLocaleDateString("pt-PT")}
+                            </p>
+                          </div>
+                        </Link>
+                      )
+                    })}
+                  </div>
+                </CardContent>
+              </Card>
+            )}
           </div>
         </div>
       </main>
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t px-4 md:px-6">
-        <p className="text-xs text-muted-foreground">© 2025 ReViver. Todos os direitos reservados.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="/terms" className="text-xs hover:underline underline-offset-4">
-            Termos de Uso
-          </Link>
-          <Link href="/privacy" className="text-xs hover:underline underline-offset-4">
-            Política de Privacidade
-          </Link>
-        </nav>
-      </footer>
     </div>
   )
 }
-
