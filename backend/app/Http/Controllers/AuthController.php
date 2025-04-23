@@ -30,7 +30,9 @@ class AuthController extends Controller
                 'email' => $validatedData['email'],
                 'password' => Hash::make($validatedData['password']),
                 'role_id' => 1,
+                'contact' => 1,
                 'status_id' => 2,
+                'availability' => 3
             ]);
 
             \Log::info('Usuário criado com ID: '.$user->id);
