@@ -48,9 +48,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <LayoutDashboard className="h-5 w-5" />
             Dashboard
           </Link>
-          <Link href="/admin/donations" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
+          <Link href="/admin/approvals" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
             <Gift className="h-5 w-5" />
-            Doações Pendentes
+            Pedidos Pendentes
           </Link>
           <Link href="/admin/volunteers" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
             <Users className="h-5 w-5" />
@@ -99,9 +99,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                 <LayoutDashboard className="h-5 w-5" />
                 Dashboard
               </Link>
-              <Link href="/admin/donations" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
+              <Link href="/admin/approvals" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
                 <Gift className="h-5 w-5" />
-                Doações Pendentes
+                Pedidos Pendentes
               </Link>
               <Link href="/admin/volunteers" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted" onClick={() => setOpen(false)}>
                 <Users className="h-5 w-5" />

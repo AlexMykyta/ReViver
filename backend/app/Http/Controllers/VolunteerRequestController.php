@@ -4,6 +4,8 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use App\Models\Report;
+use App\Models\User;
+
 use Illuminate\Support\Facades\Auth;
 
 class VolunteerRequestController extends Controller
@@ -122,6 +124,15 @@ class VolunteerRequestController extends Controller
                 'status' => $statusMap[$validated['status']],
                 'aproved_by' => $user_id,
             ]);
+
+            $userRequest = User::findOrFail($volunteerRequest->user_id);
+
+            if($statusMap[$validated['status']] == 2){
+                $userRequest->update([
+                    'role_id' => 2
+                ]);
+            }
+            
 
             return response()->json([
                 'success' => true,

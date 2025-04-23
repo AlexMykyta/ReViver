@@ -10,12 +10,8 @@ import { useAuth } from "@/components/auth-provider"
 import { Button } from "@/components/ui/button"
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet"
 
-export default function VolunteerLayout({
-  children,
-}: {
-  children: React.ReactNode
-}) {
-  const { user, logout } = useAuth()
+export default function VolunteerLayout({children,}: {children: React.ReactNode}) {
+  const { user, isVolunteer, logout, isLoading } = useAuth()
   const router = useRouter()
   const [open, setOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
@@ -24,9 +20,6 @@ export default function VolunteerLayout({
   useEffect(() => {
     setMounted(true)
   }, [])
-
-  // Verificar se o usuário é um voluntário (em uma aplicação real, isso viria do backend)
-  const isVolunteer = user?.email === "voluntario@example.com" || user?.email === "admin@example.com"
 
   // Redirect if not volunteer
   useEffect(() => {

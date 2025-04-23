@@ -143,7 +143,10 @@ export default function ApprovalsPage() {
       setVolunteers(volunteers.map(v => 
         v.id === id ? { ...v, status: "aprovado" } : v
       ));
-  
+
+      //faz refresh
+      setVolunteers(prev => prev.filter(v => v.id !== id));
+      
       toast({ 
         title: "Sucesso", 
         description: "Voluntário aprovado com sucesso",
@@ -188,13 +191,15 @@ export default function ApprovalsPage() {
       setVolunteers(volunteers.map(v => 
         v.id === id ? { ...v, status: "rejeitado" } : v
       ));
-  
+      //faz refresh
+      setVolunteers(prev => prev.filter(v => v.id !== id));
+
       toast({ 
         title: "Sucesso", 
         description: "Voluntário rejeitado",
         variant: "destructive" 
       });
-  
+
     } catch (error) {
       toast({
         title: "Erro",
