@@ -4,10 +4,9 @@ import { useState, useEffect } from "react"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Clock, XCircle, Search, Pencil } from "lucide-react"
+import { CheckCircle, XCircle, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
 import { useToast } from "@/components/ui/use-toast"
-import { Badge } from "@/components/ui/badge"
 import { useRouter } from "next/navigation"
 
 type ApprovalStatus = "pendente" | "recebendo" | "aprovado" | "rejeitado"
@@ -23,24 +22,16 @@ type Donation = {
 
 type Volunteer = {
   id: number
-  name: string
-  area: string
-  date: string
+  motivation: string
   status: ApprovalStatus
+  name?: string
 }
 
 export default function ApprovalsPage() {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
   const [mounted, setMounted] = useState(false)
-  const router = useRouter()
-
-  // Fix for hydration issues - only render client-side content after mount
-  useEffect(() => {
-    setMounted(true)
-  }, [])
-
-  // Mock data for pending donations
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([])
   const [donations, setDonations] = useState<Donation[]>([
     {
       id: 1,
@@ -58,171 +49,184 @@ export default function ApprovalsPage() {
       date: "2025-03-16",
       status: "pendente",
     },
-    {
-      id: 4,
-      title: "Cobertores",
-      category: "Roupas",
-      donor: "Carlos Pereira",
-      date: "2025-03-17",
-      status: "pendente",
-    },
-    {
-      id: 6,
-      title: "Móveis para sala",
-      category: "Casa",
-      donor: "Roberto Almeida",
-      date: "2025-03-18",
-      status: "pendente",
-    },
-    {
-      id: 7,
-      title: "Roupas de inverno",
-      category: "Roupas",
-      donor: "Fernanda Lima",
-      date: "2025-03-19",
-      status: "pendente",
-    },
   ])
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
 
-  // Mock data for pending volunteers
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([
-    {
-      id: 1,
-      name: "Maria Silva",
-      area: "Distribuição",
-      date: "2025-03-15",
-      status: "pendente",
-    },
-    {
-      id: 3,
-      name: "Ana Oliveira",
-      area: "Atendimento",
-      date: "2025-03-14",
-      status: "pendente",
-    },
-    {
-      id: 4,
-      name: "Carlos Pereira",
-      area: "Distribuição",
-      date: "2025-03-17",
-      status: "pendente",
-    },
-  ])
+  useEffect(() => {
+    setMounted(true)
+    const fetchVolunteers = async () => {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+        const response = await fetch("http://localhost:8000/api/volunteer-requests/getPedding", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) {
+          throw new Error("Erro ao carregar voluntários")
+        }
+        const data = await response.json()
+        console.log("Dados recebidos:", data)
+  
+        setVolunteers(Array.isArray(data.reports) ? data.reports.map((v: any) => ({
+          id: v.id,
+          name: v.name,
+          motivation: v.motivation,
+          status: "pendente"
+        })) : [])
+  
+      } catch (error) {
+        toast({ title: "Erro ao carregar voluntários", description: "Não foi possível obter os dados." })
+        setVolunteers([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchVolunteers()
+  }, [])
 
-  // Don't render until client-side hydration is complete
-  if (!mounted) {
-    return null
-  }
-
-  // Filter donations based on search term
-  const filteredDonations = donations.filter(
-    (donation) =>
-      donation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      donation.donor.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  // Filter volunteers based on search term
-  const filteredVolunteers = volunteers.filter(
-    (volunteer) =>
-      volunteer.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-      volunteer.area.toLowerCase().includes(searchTerm.toLowerCase()),
-  )
-
-  // Handle donation approval for warehouse receiving
   const handleApproveDonation = (id: number) => {
     setDonations(
       donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "recebendo" as ApprovalStatus } : donation,
-      ),
+        donation.id === id ? { ...donation, status: "aprovado" } : donation
+      )
     )
-
     toast({
-      title: "Doação aprovada para recebimento",
-      description: "A doação foi aprovada e está aguardando chegada no armazém.",
+      title: "Doação aprovada",
+      description: "A doação foi aprovada com sucesso.",
       variant: "default",
     })
   }
 
-  // Handle donation publishing after it arrives at warehouse
-  const handlePublishDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "aprovado" as ApprovalStatus } : donation,
-      ),
-    )
-
-    toast({
-      title: "Doação publicada",
-      description: "A doação foi verificada e publicada na plataforma.",
-      variant: "default",
-    })
-  }
-
-  // Handle donation rejection
   const handleRejectDonation = (id: number) => {
     setDonations(
       donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "rejeitado" as ApprovalStatus } : donation,
-      ),
+        donation.id === id ? { ...donation, status: "rejeitado" } : donation
+      )
     )
-
     toast({
       title: "Doação rejeitada",
-      description: "A doação foi rejeitada e não será exibida na plataforma.",
+      description: "A doação foi rejeitada.",
       variant: "destructive",
     })
   }
 
-  // Handle volunteer approval
-  const handleApproveVolunteer = (id: number) => {
-    setVolunteers(
-      volunteers.map((volunteer) =>
-        volunteer.id === id ? { ...volunteer, status: "aprovado" as ApprovalStatus } : volunteer,
-      ),
-    )
+  const handleApproveVolunteer = async (id: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({ title: "Erro", description: "Faça login novamente", variant: "destructive" });
+        return;
+      }
+  
+      const response = await fetch('http://localhost:8000/api/volunteer-requests/updateStatus', {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          id: id,
+          status: "aprovado" 
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao aprovar voluntário");
+      }
+  
+      setVolunteers(volunteers.map(v => 
+        v.id === id ? { ...v, status: "aprovado" } : v
+      ));
 
-    toast({
-      title: "Voluntário aprovado",
-      description: "O voluntário foi aprovado com sucesso e pode começar a atuar.",
-      variant: "default",
-    })
-  }
+      //faz refresh
+      setVolunteers(prev => prev.filter(v => v.id !== id));
+      
+      toast({ 
+        title: "Sucesso", 
+        description: "Voluntário aprovado com sucesso",
+        variant: "default" 
+      });
+  
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
+  
+  const handleRejectVolunteer = async (id: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({ title: "Erro", description: "Faça login novamente", variant: "destructive" });
+        return;
+      }
+  
+      const response = await fetch('http://localhost:8000/api/volunteer-requests/updateStatus', {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+        body: JSON.stringify({ 
+          id: id,
+          status: "rejeitado" 
+        })
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao rejeitar voluntário");
+      }
+  
+      setVolunteers(volunteers.map(v => 
+        v.id === id ? { ...v, status: "rejeitado" } : v
+      ));
+      //faz refresh
+      setVolunteers(prev => prev.filter(v => v.id !== id));
 
-  // Handle volunteer rejection
-  const handleRejectVolunteer = (id: number) => {
-    setVolunteers(
-      volunteers.map((volunteer) =>
-        volunteer.id === id ? { ...volunteer, status: "rejeitado" as ApprovalStatus } : volunteer,
-      ),
-    )
+      toast({ 
+        title: "Sucesso", 
+        description: "Voluntário rejeitado",
+        variant: "destructive" 
+      });
 
-    toast({
-      title: "Voluntário rejeitado",
-      description: "A candidatura do voluntário foi rejeitada.",
-      variant: "destructive",
-    })
-  }
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
 
-  // Format date to local format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("pt-BR")
-  }
+  if (!mounted) return null
+  if (loading) return <p>Carregando voluntários...</p>
+
+  const filteredVolunteers = volunteers.filter(
+    (volunteer) =>
+      volunteer.motivation.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const filteredDonations = donations.filter(
+    (donation) =>
+      donation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      donation.donor.toLowerCase().includes(searchTerm.toLowerCase())
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
         <h1 className="text-2xl font-bold tracking-tight">Aprovações Pendentes</h1>
-        <div className="relative">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-          <Input
-            type="search"
-            placeholder="Buscar..."
-            className="w-full sm:w-[250px] pl-8"
-            value={searchTerm}
-            onChange={(e) => setSearchTerm(e.target.value)}
-          />
-        </div>
       </div>
 
       <Tabs defaultValue="donations">
@@ -243,51 +247,20 @@ export default function ApprovalsPage() {
               ) : (
                 <div className="space-y-4">
                   {filteredDonations.map((donation) => (
-                    <div
-                      key={donation.id}
-                      className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-                    >
+                    <div key={donation.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                       <div className="space-y-1">
                         <div className="font-medium">{donation.title}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {donation.category} • {donation.donor} • {formatDate(donation.date)}
-                        </div>
-                        {donation.status === "recebendo" && (
-                          <Badge variant="outline" className="bg-amber-50 text-amber-700 border-amber-200">
-                            <Clock className="mr-1 h-3 w-3" />
-                            Aguardando chegada no armazém
-                          </Badge>
-                        )}
+                        <div className="text-sm text-muted-foreground">{donation.category} • {donation.donor} • {donation.date}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        {donation.status === "pendente" && (
-                          <>
-                            <Button variant="outline" size="sm" onClick={() => handleRejectDonation(donation.id)}>
-                              <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                              Rejeitar
-                            </Button>
-                            <Button size="sm" onClick={() => handleApproveDonation(donation.id)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Aprovar para recebimento
-                            </Button>
-                          </>
-                        )}
-                        {donation.status === "recebendo" && (
-                          <>
-                            <Button
-                              variant="outline"
-                              size="sm"
-                              onClick={() => router.push(`/admin/donations/edit/${donation.id}`)}
-                            >
-                              <Pencil className="mr-2 h-4 w-4" />
-                              Editar e publicar
-                            </Button>
-                            <Button size="sm" onClick={() => handlePublishDonation(donation.id)}>
-                              <CheckCircle className="mr-2 h-4 w-4" />
-                              Publicar
-                            </Button>
-                          </>
-                        )}
+                        <Button variant="outline" size="sm" onClick={() => handleRejectDonation(donation.id)}>
+                          <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                          Rejeitar
+                        </Button>
+                        <Button size="sm" onClick={() => handleApproveDonation(donation.id)}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Aprovar
+                        </Button>
                       </div>
                     </div>
                   ))}
@@ -309,15 +282,10 @@ export default function ApprovalsPage() {
               ) : (
                 <div className="space-y-4">
                   {filteredVolunteers.map((volunteer) => (
-                    <div
-                      key={volunteer.id}
-                      className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
-                    >
+                    <div key={volunteer.id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
                       <div className="space-y-1">
-                        <div className="font-medium">{volunteer.name}</div>
-                        <div className="text-sm text-muted-foreground">
-                          {volunteer.area} • {formatDate(volunteer.date)}
-                        </div>
+                        <div className="font-medium">Nome: {volunteer.name}</div>
+                        <div className="text-sm text-muted-foreground">Motivação: {volunteer.motivation}</div>
                       </div>
                       <div className="flex items-center gap-2">
                         <Button variant="outline" size="sm" onClick={() => handleRejectVolunteer(volunteer.id)}>
@@ -340,4 +308,3 @@ export default function ApprovalsPage() {
     </div>
   )
 }
-

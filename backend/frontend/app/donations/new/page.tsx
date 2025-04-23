@@ -16,9 +16,12 @@ export default function NewDonationPage() {
           <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">Doações</Link>
-          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">Sobre</Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">Contato</Link>
+          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">
+            Doações
+          </Link>
+          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
+            Sobre
+          </Link>
           <UserNav />
         </nav>
       </header>

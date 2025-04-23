@@ -6,7 +6,6 @@ import { useState, useEffect } from "react"
 import Link from "next/link"
 import { useRouter } from "next/navigation"
 import { Camera, Save, ArrowLeft } from "lucide-react"
-
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card"
 import { Input } from "@/components/ui/input"
@@ -27,14 +26,13 @@ export default function ProfilePage() {
   const [formState, setFormState] = useState({
     name: "",
     email: "",
-    phone: "(11) 98765-4321", // Example data
-    bio: "Olá! Estou aqui para ajudar minha comunidade através de doações.", // Example data
+    phone: "",
+    bio: "Olá! Estou aqui para ajudar minha comunidade através de doações.",
     avatarUrl: "/placeholder.svg?height=128&width=128",
   })
   const [isLoading, setIsLoading] = useState(false)
   const [mounted, setMounted] = useState(false)
 
-  // Initialize form with user data after component mounts
   useEffect(() => {
     setMounted(true)
 
@@ -47,7 +45,6 @@ export default function ProfilePage() {
     }
   }, [user])
 
-  // Handle form field changes
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { id, value } = e.target
     setFormState((prev) => ({
@@ -56,13 +53,12 @@ export default function ProfilePage() {
     }))
   }
 
-  // Handle avatar upload
+
   const handleAvatarUpload = () => {
-    // In a real app, this would open a file picker and upload the image
+
     setIsLoading(true)
 
     setTimeout(() => {
-      // Simulate a random avatar
       const randomId = Math.floor(Math.random() * 1000)
       setFormState((prev) => ({
         ...prev,
@@ -77,12 +73,10 @@ export default function ProfilePage() {
     }, 1500)
   }
 
-  // Handle form submission
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     setIsLoading(true)
 
-    // In a real app, you would send the updated profile to an API
     setTimeout(() => {
       setIsLoading(false)
 
@@ -93,7 +87,6 @@ export default function ProfilePage() {
     }, 1500)
   }
 
-  // Get initials for avatar fallback
   const getInitials = (name: string) => {
     if (!name) return "U"
     return name
@@ -104,14 +97,12 @@ export default function ProfilePage() {
       .substring(0, 2)
   }
 
-  // Always call useEffect for redirection, but conditionally execute the effect
   useEffect(() => {
     if (mounted && !user) {
       router.push("/login")
     }
   }, [user, router, mounted])
 
-  // If not mounted yet or no user, return null
   if (!mounted || !user) {
     return null
   }
@@ -128,9 +119,6 @@ export default function ProfilePage() {
           </Link>
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
-          </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
           </Link>
           <UserNav />
         </nav>

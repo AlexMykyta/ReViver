@@ -17,13 +17,10 @@ export default function HomePage() {
             Doações
           </Link>
           <Link href="/volunteers" className="text-sm font-medium hover:underline underline-offset-4">
-            Voluntários
+            Ser Voluntário
           </Link>
           <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
             Sobre
-          </Link>
-          <Link href="/contact" className="text-sm font-medium hover:underline underline-offset-4">
-            Contato
           </Link>
           <UserNav />
         </nav>
@@ -37,8 +34,8 @@ export default function HomePage() {
                   Compartilhe o que você não precisa com quem realmente necessita
                 </h1>
                 <p className="text-muted-foreground md:text-xl">
-                  Nossa plataforma conecta doadores a pessoas que precisam de comida, roupas e itens para casa. Faça a
-                  diferença na sua comunidade hoje.
+                  A nossa plataforma conecta doadores a pessoas que precisam de comida, roupas e artigos para casa. Faça a
+                  diferença na nossa comunidade hoje.
                 </p>
                 <div className="flex flex-col gap-2 sm:flex-row">
                   <Link href="/donations">
@@ -73,7 +70,7 @@ export default function HomePage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">Como funciona</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Três passos simples para começar a doar ou receber itens
+                  Três passos simples para começar a doar ou receber artigos
                 </p>
               </div>
             </div>
@@ -84,7 +81,7 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">Comida</h3>
                 <p className="text-muted-foreground">
-                  Doe alimentos não perecíveis para famílias necessitadas na sua comunidade.
+                  Doe alimentos não perecíveis para famílias necessitadas.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-4 text-center">
@@ -93,16 +90,16 @@ export default function HomePage() {
                 </div>
                 <h3 className="text-xl font-bold">Roupas</h3>
                 <p className="text-muted-foreground">
-                  Compartilhe roupas em bom estado que você não usa mais com quem precisa.
+                  Doe roupas em bom estado que você não usa mais com quem precisa.
                 </p>
               </div>
               <div className="flex flex-col items-center space-y-4 text-center">
                 <div className="flex h-16 w-16 items-center justify-center rounded-full bg-primary text-primary-foreground">
                   <Home className="h-8 w-8" />
                 </div>
-                <h3 className="text-xl font-bold">Itens para Casa</h3>
+                <h3 className="text-xl font-bold">Artigos para Casa</h3>
                 <p className="text-muted-foreground">
-                  Doe móveis, utensílios e outros itens domésticos para ajudar famílias a montar seus lares.
+                  Doe móveis, utensílios e outros artigos domésticos para ajudar famílias a montar os seus lares.
                 </p>
               </div>
             </div>
@@ -114,7 +111,7 @@ export default function HomePage() {
               <div className="space-y-2">
                 <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl">Torne-se um Voluntário</h2>
                 <p className="max-w-[900px] text-muted-foreground md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
-                  Ajude-nos a fazer a diferença na comunidade
+                  Ajude-nos a fazer a diferença
                 </p>
               </div>
             </div>

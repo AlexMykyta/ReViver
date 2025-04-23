@@ -16,13 +16,13 @@ type VolunteerStatus = "pendente" | "aprovado" | "rejeitado"
 
 type Volunteer = {
   id: number
+  user_id: number
   name: string
   email: string
   phone: string
-  area: string
   experience: string
   availability: string
-  date: string
+  created_at: string
   status: VolunteerStatus
 }
 
@@ -33,70 +33,59 @@ export default function VolunteersPage() {
   const [selectedVolunteer, setSelectedVolunteer] = useState<Volunteer | null>(null)
   const [detailsOpen, setDetailsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Fix for hydration issues - only render client-side content after mount
   useEffect(() => {
     setMounted(true)
+    fetchVolunteers()
   }, [])
 
-  // Mock data for volunteers
-  const [volunteers, setVolunteers] = useState<Volunteer[]>([
-    {
-      id: 1,
-      name: "Maria Silva",
-      email: "maria.silva@exemplo.com",
-      phone: "(11) 98765-4321",
-      area: "Distribuição",
-      experience: "Já trabalhei como voluntária em ONGs de distribuição de alimentos por 2 anos.",
-      availability: "Fins de semana",
-      date: "2025-03-15",
-      status: "pendente",
-    },
-    {
-      id: 2,
-      name: "João Santos",
-      email: "joao.santos@exemplo.com",
-      phone: "(11) 91234-5678",
-      area: "Logística",
-      experience: "Sou motorista profissional e posso ajudar com transporte de doações.",
-      availability: "Noites e fins de semana",
-      date: "2025-03-16",
-      status: "aprovado",
-    },
-    {
-      id: 3,
-      name: "Ana Oliveira",
-      email: "ana.oliveira@exemplo.com",
-      phone: "(11) 99876-5432",
-      area: "Atendimento",
-      experience: "Trabalho com atendimento ao público e tenho experiência em assistência social.",
-      availability: "Terças e quintas à tarde",
-      date: "2025-03-14",
-      status: "pendente",
-    },
-    {
-      id: 4,
-      name: "Carlos Pereira",
-      email: "carlos.pereira@exemplo.com",
-      phone: "(11) 98765-1234",
-      area: "Distribuição",
-      experience: "Sou estudante de serviço social e quero ganhar experiência prática.",
-      availability: "Segundas, quartas e sextas",
-      date: "2025-03-17",
-      status: "pendente",
-    },
-    {
-      id: 5,
-      name: "Juliana Costa",
-      email: "juliana.costa@exemplo.com",
-      phone: "(11) 91234-9876",
-      area: "Logística",
-      experience: "Tenho experiência em organização de estoques e inventário.",
-      availability: "Fins de semana",
-      date: "2025-03-13",
-      status: "rejeitado",
-    },
-  ])
+  const fetchVolunteers = async () => {
+    try {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+
+      const response = await fetch("http://localhost:8000/api/volunteer-requests/getAll", {
+        method: "GET",
+        headers: { 
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        }
+      })
+
+      if (!response.ok) {
+        throw new Error("Erro ao carregar voluntários")
+      }
+
+      const data = await response.json()
+      
+      // Mapeia os dados da API para o formato esperado no frontend
+      const formattedVolunteers = data.reports.map((volunteer: any) => ({
+        id: volunteer.id,
+        user_id: volunteer.user_id,
+        name: volunteer.name || 'Nome não disponível',
+        email: volunteer.user.email || 'Email não disponível',
+        phone: volunteer.user?.phone || 'Telefone não disponível',
+        experience: volunteer.experience || 'Experiência não informada',
+        availability: volunteer.user_availability.user_availability || 'Disponibilidade não informada',
+        created_at: volunteer.created_at,
+        status: volunteer.status === 2 ? 'aprovado' : volunteer.status === 3 ? 'rejeitado' : 'pendente'
+      }))
+
+      setVolunteers(formattedVolunteers)
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro ao carregar voluntários",
+        variant: "destructive"
+      })
+    } finally {
+      setLoading(false)
+    }
+  }
 
   // Don't render until client-side hydration is complete
   if (!mounted) {
@@ -208,9 +197,7 @@ export default function VolunteersPage() {
                 <TableHead>ID</TableHead>
                 <TableHead>Nome</TableHead>
                 <TableHead>Email</TableHead>
-                <TableHead>Área</TableHead>
                 <TableHead>Disponibilidade</TableHead>
-                <TableHead>Data</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -228,9 +215,7 @@ export default function VolunteersPage() {
                     <TableCell className="font-medium">{volunteer.id}</TableCell>
                     <TableCell>{volunteer.name}</TableCell>
                     <TableCell>{volunteer.email}</TableCell>
-                    <TableCell>{volunteer.area}</TableCell>
                     <TableCell>{volunteer.availability}</TableCell>
-                    <TableCell>{formatDate(volunteer.date)}</TableCell>
                     <TableCell>
                       <Badge
                         variant={
@@ -312,20 +297,12 @@ export default function VolunteersPage() {
                 <span className="col-span-3">{selectedVolunteer.phone}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Área:</span>
-                <span className="col-span-3">{selectedVolunteer.area}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
                 <span className="text-sm font-medium">Disponibilidade:</span>
                 <span className="col-span-3">{selectedVolunteer.availability}</span>
               </div>
               <div className="grid grid-cols-4 items-start gap-4">
                 <span className="text-sm font-medium">Experiência:</span>
                 <span className="col-span-3">{selectedVolunteer.experience}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Data:</span>
-                <span className="col-span-3">{formatDate(selectedVolunteer.date)}</span>
               </div>
               <div className="grid grid-cols-4 items-center gap-4">
                 <span className="text-sm font-medium">Status:</span>
