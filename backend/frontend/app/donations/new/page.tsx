@@ -10,9 +10,8 @@ import { UserNav } from "@/components/user-nav"
 export default function NewDonationPage() {
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
+      <header className="header px-4 lg:px-6 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Gift className="h-6 w-6" />
           <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
