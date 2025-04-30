@@ -100,14 +100,17 @@ export default function DonationDetailsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
+      <header className="header px-4 lg:px-6 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
-          <Gift className="h-6 w-6" />
           <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">Doações</Link>
-          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">Sobre</Link>
+          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">
+            Doações
+          </Link>
+          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
+            Sobre
+          </Link>
           <UserNav />
         </nav>
       </header>

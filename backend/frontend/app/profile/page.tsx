@@ -109,7 +109,7 @@ export default function ProfilePage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
+      <header className="header px-4 lg:px-6 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <span>ReViver</span>
         </Link>
@@ -185,7 +185,7 @@ export default function ProfilePage() {
                 <h3 className="text-lg font-medium">Informações de Contato</h3>
 
                 <div className="space-y-2">
-                  <Label htmlFor="phone">Telefone</Label>
+                  <Label htmlFor="phone">Telemovel</Label>
                   <Input id="phone" value={formState.phone} onChange={handleChange} placeholder="(00) 00000-0000" />
                 </div>
               </div>
@@ -194,7 +194,7 @@ export default function ProfilePage() {
 
               {/* Bio */}
               <div className="space-y-2">
-                <Label htmlFor="bio">Sobre você</Label>
+                <Label htmlFor="bio">Sobre mim</Label>
                 <Textarea
                   id="bio"
                   value={formState.bio}
@@ -240,4 +240,3 @@ export default function ProfilePage() {
     </div>
   )
 }
-

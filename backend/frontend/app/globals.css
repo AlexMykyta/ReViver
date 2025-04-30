@@ -14,86 +14,218 @@ body {
 
 @layer base {
   :root {
-    --background: 0 0% 100%;
-    --foreground: 222 47% 11%;
+    /* Definição das cores da paleta */
+    --color-dark-blue: 220 15% 27%; /* #383F51 */
+    --color-lavender: 242 50% 90%; /* #DDDBF1 */
+    --color-medium-blue: 220 33% 35%; /* #3C4F76 */
+    --color-beige: 25 20% 75%; /* #D1BEB0 */
+    --color-mauve: 15 5% 65%; /* #AB9F9D */
+
+    /* Mapeamento para as variáveis do Tailwind */
+    --background: var(--color-lavender);
+    --foreground: var(--color-dark-blue);
 
     --card: 0 0% 100%;
-    --card-foreground: 222 47% 11%;
+    --card-foreground: var(--color-dark-blue);
 
     --popover: 0 0% 100%;
-    --popover-foreground: 222 47% 11%;
+    --popover-foreground: var(--color-dark-blue);
 
-    --primary: 222.2 47.4% 11.2%;
-    --primary-foreground: 210 40% 98%;
+    --primary: var(--color-dark-blue);
+    --primary-foreground: 0 0% 100%;
 
-    --secondary: 210 40% 96.1%;
-    --secondary-foreground: 222.2 47.4% 11.2%;
+    --secondary: var(--color-medium-blue);
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 210 40% 96.1%;
-    --muted-foreground: 215.4 16.3% 46.9%;
+    --muted: var(--color-lavender);
+    --muted-foreground: var(--color-medium-blue);
 
-    --accent: 210 40% 96.1%;
-    --accent-foreground: 222.2 47.4% 11.2%;
+    --accent: var(--color-beige);
+    --accent-foreground: var(--color-dark-blue);
 
     --destructive: 0 84.2% 60.2%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 214.3 31.8% 91.4%;
-    --input: 214.3 31.8% 91.4%;
-    --ring: 222.2 84% 4.9%;
+    --border: var(--color-lavender);
+    --input: var(--color-lavender);
+    --ring: var(--color-medium-blue);
 
     --radius: 0.5rem;
-    --sidebar-background: 0 0% 98%;
-    --sidebar-foreground: 240 5.3% 26.1%;
-    --sidebar-primary: 240 5.9% 10%;
+
+    /* Variáveis específicas para elementos da UI */
+    --header-bg: var(--color-dark-blue);
+    --header-text: 0 0% 100%;
+    --footer-bg: var(--color-dark-blue);
+    --footer-text: 0 0% 100%;
+    --hero-bg: var(--color-lavender);
+    --hero-text: var(--color-dark-blue);
+    --section-alt-bg: var(--color-medium-blue);
+    --section-alt-text: 0 0% 100%;
+    --volunteer-bg: var(--color-dark-blue);
+    --volunteer-text: 0 0% 100%;
+    --button-primary-bg: var(--color-medium-blue);
+    --button-primary-text: 0 0% 100%;
+    --button-secondary-bg: 0 0% 100%;
+    --button-secondary-text: var(--color-medium-blue);
+    --button-secondary-border: var(--color-medium-blue);
+    --icon-primary: var(--color-dark-blue);
+    --icon-secondary: var(--color-medium-blue);
+    --icon-accent: var(--color-beige);
+    --icon-muted: var(--color-mauve);
+    --avatar-bg: var(--color-medium-blue);
+    --avatar-text: 0 0% 100%;
+    --dropdown-border: var(--color-lavender);
+    --dropdown-separator: var(--color-lavender);
+
+    /* Variáveis para a sidebar */
+    --sidebar-background: var(--color-lavender);
+    --sidebar-foreground: var(--color-dark-blue);
+    --sidebar-primary: var(--color-dark-blue);
     --sidebar-primary-foreground: 0 0% 98%;
-    --sidebar-accent: 240 4.8% 95.9%;
-    --sidebar-accent-foreground: 240 5.9% 10%;
-    --sidebar-border: 220 13% 91%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: var(--color-lavender);
+    --sidebar-accent-foreground: var(--color-dark-blue);
+    --sidebar-border: var(--color-lavender);
+    --sidebar-ring: var(--color-medium-blue);
   }
 
   .dark {
-    --background: 222 47% 11%;
-    --foreground: 210 40% 98%;
+    --background: var(--color-dark-blue);
+    --foreground: 0 0% 100%;
 
-    --card: 222 47% 11%;
-    --card-foreground: 210 40% 98%;
+    --card: var(--color-dark-blue);
+    --card-foreground: 0 0% 100%;
 
-    --popover: 222 47% 11%;
-    --popover-foreground: 210 40% 98%;
+    --popover: var(--color-dark-blue);
+    --popover-foreground: 0 0% 100%;
 
-    --primary: 210 40% 98%;
-    --primary-foreground: 222.2 47.4% 11.2%;
+    --primary: 0 0% 100%;
+    --primary-foreground: var(--color-dark-blue);
 
-    --secondary: 217.2 32.6% 17.5%;
-    --secondary-foreground: 210 40% 98%;
+    --secondary: var(--color-medium-blue);
+    --secondary-foreground: 0 0% 100%;
 
-    --muted: 217.2 32.6% 17.5%;
-    --muted-foreground: 215 20.2% 65.1%;
+    --muted: var(--color-medium-blue);
+    --muted-foreground: var(--color-lavender);
 
-    --accent: 217.2 32.6% 17.5%;
-    --accent-foreground: 210 40% 98%;
+    --accent: var(--color-beige);
+    --accent-foreground: var(--color-dark-blue);
 
     --destructive: 0 62.8% 30.6%;
-    --destructive-foreground: 210 40% 98%;
+    --destructive-foreground: 0 0% 100%;
 
-    --border: 217.2 32.6% 17.5%;
-    --input: 217.2 32.6% 17.5%;
-    --ring: 212.7 26.8% 83.9%;
-    --chart-1: 220 70% 50%;
-    --chart-2: 160 60% 45%;
-    --chart-3: 30 80% 55%;
-    --chart-4: 280 65% 60%;
-    --chart-5: 340 75% 55%;
-    --sidebar-background: 240 5.9% 10%;
-    --sidebar-foreground: 240 4.8% 95.9%;
-    --sidebar-primary: 224.3 76.3% 48%;
+    --border: var(--color-medium-blue);
+    --input: var(--color-medium-blue);
+    --ring: var(--color-lavender);
+
+    /* Variáveis específicas para elementos da UI no modo escuro */
+    --header-bg: var(--color-dark-blue);
+    --header-text: 0 0% 100%;
+    --footer-bg: var(--color-dark-blue);
+    --footer-text: 0 0% 100%;
+    --hero-bg: var(--color-medium-blue);
+    --hero-text: 0 0% 100%;
+    --section-alt-bg: var(--color-lavender);
+    --section-alt-text: var(--color-dark-blue);
+    --volunteer-bg: var(--color-medium-blue);
+    --volunteer-text: 0 0% 100%;
+    --button-primary-bg: var(--color-lavender);
+    --button-primary-text: var(--color-dark-blue);
+    --button-secondary-bg: transparent;
+    --button-secondary-text: var(--color-lavender);
+    --button-secondary-border: var(--color-lavender);
+    --icon-primary: var(--color-lavender);
+    --icon-secondary: var(--color-beige);
+    --icon-accent: var(--color-beige);
+    --icon-muted: var(--color-lavender);
+    --avatar-bg: var(--color-lavender);
+    --avatar-text: var(--color-dark-blue);
+    --dropdown-border: var(--color-medium-blue);
+    --dropdown-separator: var(--color-medium-blue);
+
+    /* Variáveis para gráficos */
+    --chart-1: var(--color-dark-blue);
+    --chart-2: var(--color-lavender);
+    --chart-3: var(--color-medium-blue);
+    --chart-4: var(--color-beige);
+    --chart-5: var(--color-mauve);
+
+    /* Variáveis para a sidebar no modo escuro */
+    --sidebar-background: var(--color-dark-blue);
+    --sidebar-foreground: 0 0% 100%;
+    --sidebar-primary: var(--color-medium-blue);
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 240 3.7% 15.9%;
-    --sidebar-accent-foreground: 240 4.8% 95.9%;
-    --sidebar-border: 240 3.7% 15.9%;
-    --sidebar-ring: 217.2 91.2% 59.8%;
+    --sidebar-accent: var(--color-dark-blue);
+    --sidebar-accent-foreground: 0 0% 100%;
+    --sidebar-border: var(--color-medium-blue);
+    --sidebar-ring: var(--color-lavender);
+  }
+}
+
+/* Classes utilitárias personalizadas para elementos específicos */
+@layer components {
+  .header {
+    background-color: hsl(var(--header-bg));
+    color: hsl(var(--header-text));
+  }
+
+  .footer {
+    background-color: hsl(var(--footer-bg));
+    color: hsl(var(--footer-text));
+  }
+
+  .hero-section {
+    background-color: hsl(var(--hero-bg));
+    color: hsl(var(--hero-text));
+  }
+
+  .section-alt {
+    background-color: hsl(var(--section-alt-bg));
+    color: hsl(var(--section-alt-text));
+  }
+
+  .volunteer-section {
+    background-color: hsl(var(--volunteer-bg));
+    color: hsl(var(--volunteer-text));
+  }
+
+  .btn-primary-custom {
+    background-color: hsl(var(--button-primary-bg));
+    color: hsl(var(--button-primary-text));
+  }
+
+  .btn-secondary-custom {
+    background-color: hsl(var(--button-secondary-bg));
+    color: hsl(var(--button-secondary-text));
+    border-color: hsl(var(--button-secondary-border));
+  }
+
+  .icon-primary {
+    color: hsl(var(--icon-primary));
+  }
+
+  .icon-secondary {
+    color: hsl(var(--icon-secondary));
+  }
+
+  .icon-accent {
+    color: hsl(var(--icon-accent));
+  }
+
+  .icon-muted {
+    color: hsl(var(--icon-muted));
+  }
+
+  .avatar-custom {
+    background-color: hsl(var(--avatar-bg));
+    color: hsl(var(--avatar-text));
+  }
+
+  .dropdown-custom {
+    border-color: hsl(var(--dropdown-border));
+  }
+
+  .dropdown-separator {
+    background-color: hsl(var(--dropdown-separator));
   }
 }
 
@@ -105,4 +237,3 @@ body {
     @apply bg-background text-foreground;
   }
 }
-

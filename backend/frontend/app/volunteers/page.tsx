@@ -100,7 +100,7 @@ export default function VolunteersPage() {
       }
       
       setError(errorMessage)
-      console.error("Erro na submissão:", err)
+      //console.error("Erro na submissão:", err)
     } finally {
       setIsSubmitting(false)
     }
@@ -108,7 +108,7 @@ export default function VolunteersPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
-      <header className="px-4 lg:px-6 h-16 flex items-center border-b">
+      <header className="header px-4 lg:px-6 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <span>ReViver</span>
         </Link>
@@ -182,7 +182,7 @@ export default function VolunteersPage() {
                 <Label htmlFor="motivation">Motivação*</Label>
                 <Textarea
                   id="motivation"
-                  placeholder="Por que você quer ser voluntário na nossa plataforma? (mínimo 50 caracteres)"
+                  placeholder="Por que você quer ser voluntário na nossa plataforma? (mínimo 10 caracteres)"
                   rows={4}
                   value={motivation}
                   onChange={(e) => setMotivation(e.target.value)}
