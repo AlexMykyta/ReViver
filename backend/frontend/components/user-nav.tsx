@@ -82,7 +82,7 @@ export function UserNav() {
               <DropdownMenuItem asChild>
                 <Link href="/my-requests">
                   <ShoppingCart className="mr-2 h-4 w-4" />
-                  <span>Meus Pedidos</span>
+                  <span>Meus Solicitados</span>
                 </Link>
               </DropdownMenuItem>
             </DropdownMenuGroup>

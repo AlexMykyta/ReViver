@@ -6,86 +6,64 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
 import { Badge } from "@/components/ui/badge"
 import { Button } from "@/components/ui/button"
-import { CheckCircle, Clock, XCircle, Plus, ArrowRight } from "lucide-react"
+import { CheckCircle, Clock, XCircle, Plus, ArrowRight, Pencil } from "lucide-react"
 import { UserNav } from "@/components/user-nav"
-import { useAuth } from "@/components/auth-provider"
 
-type DonationStatus = "pendente" | "aprovado" | "rejeitado"
-
-type Donation = {
-  id: number
+interface Donation {
+  donation_id: number
   title: string
-  category: string
+  category_id: number
   description: string
   date: string
-  status: DonationStatus
-  image: string
+  status_id: number
+  document: string | null
 }
 
 export default function MyDonationsPage() {
-  const { user } = useAuth()
-  const [mounted, setMounted] = useState(false)
+  const [donations, setDonations] = useState<Donation[]>([])
+  const [loading, setLoading] = useState(true)
 
-  // Fix for hydration issues - only render client-side content after mount
   useEffect(() => {
-    setMounted(true)
+    const fetchDonations = async () => {
+      try {
+        const token = localStorage.getItem("auth_token")
+        const res = await fetch("http://127.0.0.1:8000/api/donations/user", {
+          headers: {
+            Authorization: `Bearer ${token}`,
+            Accept: "application/json",
+          },
+        })
+
+        const errorText = await res.text()
+        if (!res.ok) throw new Error("Erro ao buscar doações do utilizador")
+
+        const data = JSON.parse(errorText)
+        setDonations(data)
+      } catch (error) {
+        console.error("Erro ao buscar doações:", error)
+      } finally {
+        setLoading(false)
+      }
+    }
+
+    fetchDonations()
   }, [])
 
-  // Mock data for user's donations
-  const [donations, setDonations] = useState<Donation[]>([
-    {
-      id: 1,
-      title: "Cesta Básica",
-      category: "Comida",
-      description: "Cesta com alimentos não perecíveis para uma família de 4 pessoas.",
-      date: "2025-03-15",
-      status: "aprovado",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 2,
-      title: "Roupas Infantis",
-      category: "Roupas",
-      description: "Conjunto de roupas infantis em bom estado para crianças de 3-5 anos.",
-      date: "2025-03-16",
-      status: "pendente",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 3,
-      title: "Utensílios de Cozinha",
-      category: "Casa",
-      description: "Kit com panelas, talheres e outros utensílios de cozinha em bom estado.",
-      date: "2025-03-14",
-      status: "aprovado",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-    {
-      id: 4,
-      title: "Cobertores",
-      category: "Roupas",
-      description: "Cobertores em bom estado para o inverno.",
-      date: "2025-03-17",
-      status: "rejeitado",
-      image: "/placeholder.svg?height=200&width=300",
-    },
-  ])
-
-  // Don't render until client-side hydration is complete
-  if (!mounted) {
-    return null
+  const statusMap: Record<number, { label: string; variant: "success" | "outline" | "destructive" }> = {
+    1: { label: "Pendente", variant: "outline" },
+    2: { label: "Rejeitado", variant: "destructive" },
+    3: { label: "Aprovado", variant: "success" },
+    4: { label: "Solicitado", variant: "outline" },
+    5: { label: "Terminado", variant: "success" },
+    6: { label: "Em Recolha", variant: "outline" },
+    7: { label: "A Ser Entregue", variant: "outline" },
   }
 
-  // Filter donations by status
-  const pendingDonations = donations.filter((donation) => donation.status === "pendente")
-  const approvedDonations = donations.filter((donation) => donation.status === "aprovado")
-  const rejectedDonations = donations.filter((donation) => donation.status === "rejeitado")
-
-  // Format date to local format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("pt-BR")
+  const filteredDonations = (statusFilter?: number[]) => {
+    return donations.filter(d => !statusFilter || statusFilter.includes(d.status_id))
   }
+
+  const formatDate = (date: string) => new Date(date).toLocaleDateString("pt-PT")
 
   return (
     <div className="flex flex-col min-h-screen">
@@ -94,12 +72,8 @@ export default function MyDonationsPage() {
           <span>ReViver</span>
         </Link>
         <nav className="ml-auto flex gap-4 sm:gap-6 items-center">
-          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">
-            Doações
-          </Link>
-          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">
-            Sobre
-          </Link>
+          <Link href="/donations" className="text-sm font-medium hover:underline underline-offset-4">Doações</Link>
+          <Link href="/about" className="text-sm font-medium hover:underline underline-offset-4">Sobre</Link>
           <UserNav />
         </nav>
       </header>
@@ -121,128 +95,74 @@ export default function MyDonationsPage() {
         <Tabs defaultValue="all">
           <TabsList>
             <TabsTrigger value="all">Todas ({donations.length})</TabsTrigger>
-            <TabsTrigger value="pending">Pendentes ({pendingDonations.length})</TabsTrigger>
-            <TabsTrigger value="approved">Aprovadas ({approvedDonations.length})</TabsTrigger>
-            <TabsTrigger value="rejected">Rejeitadas ({rejectedDonations.length})</TabsTrigger>
+            <TabsTrigger value="pendentes">Pendentes</TabsTrigger>
+            <TabsTrigger value="aprovadas">Aprovadas</TabsTrigger>
+            <TabsTrigger value="rejeitadas">Rejeitadas</TabsTrigger>
           </TabsList>
 
           <TabsContent value="all" className="mt-6">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {donations.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground mb-4">Você ainda não tem doações cadastradas</p>
-                  <Link href="/donations/new">
-                    <Button>
-                      <Plus className="mr-2 h-4 w-4" />
-                      Criar Doação
-                    </Button>
-                  </Link>
-                </div>
-              ) : (
-                donations.map((donation) => <DonationCard key={donation.id} donation={donation} />)
-              )}
-            </div>
+            <DonationGrid donations={donations} statusMap={statusMap} />
           </TabsContent>
-
-          <TabsContent value="pending" className="mt-6">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {pendingDonations.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">Você não tem doações pendentes</p>
-                </div>
-              ) : (
-                pendingDonations.map((donation) => <DonationCard key={donation.id} donation={donation} />)
-              )}
-            </div>
+          <TabsContent value="pendentes" className="mt-6">
+            <DonationGrid donations={filteredDonations([1])} statusMap={statusMap} />
           </TabsContent>
-
-          <TabsContent value="approved" className="mt-6">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {approvedDonations.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">Você não tem doações aprovadas</p>
-                </div>
-              ) : (
-                approvedDonations.map((donation) => <DonationCard key={donation.id} donation={donation} />)
-              )}
-            </div>
+          <TabsContent value="aprovadas" className="mt-6">
+            <DonationGrid donations={filteredDonations([3])} statusMap={statusMap} />
           </TabsContent>
-
-          <TabsContent value="rejected" className="mt-6">
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {rejectedDonations.length === 0 ? (
-                <div className="col-span-full text-center py-12">
-                  <p className="text-muted-foreground">Você não tem doações rejeitadas</p>
-                </div>
-              ) : (
-                rejectedDonations.map((donation) => <DonationCard key={donation.id} donation={donation} />)
-              )}
-            </div>
+          <TabsContent value="rejeitadas" className="mt-6">
+            <DonationGrid donations={filteredDonations([2])} statusMap={statusMap} />
           </TabsContent>
         </Tabs>
       </main>
-
-      <footer className="flex flex-col gap-2 sm:flex-row py-6 w-full border-t px-4 md:px-6">
-        <p className="text-xs text-muted-foreground">© 2025 ReViver. Todos os direitos reservados.</p>
-        <nav className="sm:ml-auto flex gap-4 sm:gap-6">
-          <Link href="/terms" className="text-xs hover:underline underline-offset-4">
-            Termos de Uso
-          </Link>
-          <Link href="/privacy" className="text-xs hover:underline underline-offset-4">
-            Política de Privacidade
-          </Link>
-        </nav>
-      </footer>
     </div>
   )
 }
 
-function DonationCard({ donation }: { donation: Donation }) {
+function DonationGrid({ donations, statusMap }: { donations: Donation[], statusMap: any }) {
+  if (!donations.length) {
+    return <p className="text-muted-foreground text-center col-span-full">Nenhuma doação encontrada</p>
+  }
+
   return (
-    <Card>
-      <CardHeader className="p-0">
-        <div className="aspect-[4/3] w-full overflow-hidden rounded-t-lg">
-          <img src={donation.image || "/placeholder.svg"} alt={donation.title} className="object-cover w-full h-full" />
-        </div>
-      </CardHeader>
-      <CardContent className="p-4">
-        <div className="flex justify-between items-start mb-2">
-          <h3 className="text-lg font-semibold">{donation.title}</h3>
-          <Badge
-            variant={
-              donation.status === "aprovado" ? "success" : donation.status === "pendente" ? "outline" : "destructive"
-            }
-            className="flex items-center gap-1"
-          >
-            {donation.status === "aprovado" && <CheckCircle className="h-3 w-3" />}
-            {donation.status === "pendente" && <Clock className="h-3 w-3" />}
-            {donation.status === "rejeitado" && <XCircle className="h-3 w-3" />}
-            {donation.status === "aprovado" && "Aprovado"}
-            {donation.status === "pendente" && "Pendente"}
-            {donation.status === "rejeitado" && "Rejeitado"}
-          </Badge>
-        </div>
-        <div className="flex items-center gap-2 mt-2">
-          <span className="text-xs bg-primary/10 text-primary px-2 py-1 rounded-full">{donation.category}</span>
-          {/* Localização removida */}
-        </div>
-        <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{donation.description}</p>
-        <div className="mt-4 flex justify-between items-center">
-          <p className="text-xs text-muted-foreground">Criado em {formatDate(donation.date)}</p>
-          <Link href={`/donations/${donation.id}`}>
-            <Button variant="ghost" size="sm" className="gap-1">
-              Detalhes
-              <ArrowRight className="h-3 w-3" />
-            </Button>
-          </Link>
-        </div>
-      </CardContent>
-    </Card>
+    <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+      {donations.map(donation => (
+        <Card key={donation.donation_id}>
+          <CardHeader className="p-0">
+            <div className="aspect-[4/3] w-full overflow-hidden rounded-t-lg">
+              {donation.document ? (
+                <img src={JSON.parse(donation.document)[0]} alt={donation.title} className="object-cover w-full h-full" />
+              ) : (
+                <div className="bg-gray-200 w-full h-full flex items-center justify-center text-sm text-muted-foreground">Sem imagem</div>
+              )}
+            </div>
+          </CardHeader>
+          <CardContent className="p-4">
+            <div className="flex justify-between items-start mb-2">
+              <h3 className="text-lg font-semibold">{donation.title}</h3>
+              <Badge variant={statusMap[donation.status_id]?.variant || "outline"}>
+                {statusMap[donation.status_id]?.label || "Desconhecido"}
+              </Badge>
+            </div>
+            <p className="text-sm text-muted-foreground mt-2 line-clamp-2">{donation.description}</p>
+            <p className="text-xs text-muted-foreground mt-2">Criado em {new Date(donation.date).toLocaleDateString("pt-PT")}</p>
+            <div className="flex gap-2 mt-2">
+              <Link href={`/donations/${donation.donation_id}`}>
+                <Button variant="ghost" size="sm" className="gap-1">
+                  Detalhes
+                  <ArrowRight className="h-3 w-3" />
+                </Button>
+              </Link>
+              {[1, 2, 3].includes(donation.status_id) && (
+                <Link href={`/edit/${donation.donation_id}`}>
+                <Button variant="ghost" size="sm" className="gap-1">
+                    <Pencil className="h-3 w-3" />
+                  </Button>
+                </Link>
+              )}
+            </div>
+          </CardContent>
+        </Card>
+      ))}
+    </div>
   )
 }
-
-function formatDate(dateString: string) {
-  const date = new Date(dateString)
-  return date.toLocaleDateString("pt-BR")
-}
-
