@@ -37,7 +37,7 @@ export default function AboutPage() {
             </div>
             <div className="grid gap-6 lg:grid-cols-2 lg:gap-12 items-center">
               <div className="space-y-4">
-                <h2 className="text-2xl font-bold">Nossa Missão</h2>
+                <h2 className="text-2xl font-bold">A nossa Missão</h2>
                 <p className="text-muted-foreground">
                   O ReViver nasceu da crença de que todos merecem acesso a coisas essenciais para uma vida digna. A nossa
                   missão é criar uma ponte entre aqueles que têm recursos para doar e aqueles que estão em situação de
