@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="pt">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Exemplo de Notificações</title>
+    <!-- Inclua o CSS do Toastr -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.css">
+</head>
+<body>
+    <!-- Inclua o JavaScript do Toastr -->
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/toastr.js/latest/toastr.min.js"></script>
+
+    <script>
+        // Função para fazer uma requisição à API
+        async function makeApiRequest(url, options) {
+            try {
+                const response = await fetch(url, options);
+                const data = await response.json();
+
+                // Exibir notificação de sucesso ou erro
+                if (data.success) {
+                    toastr.success(data.message, 'Sucesso');
+                } else {
+                    toastr.error(data.message || 'Ocorreu um erro.', 'Erro');
+                }
+            } catch (error) {
+                toastr.error('Erro ao comunicar com o servidor.', 'Erro');
+            }
+        }
+
+        // Exemplo de chamada à API
+        makeApiRequest('/api/donations', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ /* Dados da doação */ })
+        });
+    </script>
+</body>
+</html>

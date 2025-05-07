@@ -2,6 +2,9 @@
 
 namespace App\Http\Controllers;
 
+use Carbon\Carbon;
+use App\Models\User;
+use App\Models\Notification;
 use App\Models\Donation;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Auth;
@@ -9,12 +12,8 @@ use Illuminate\Support\Facades\Log;
 
 class DonationController extends Controller
 {
-    /**
-     * Criar uma nova doação
-     */
     public function newDonation(Request $request)
     {
-        // Verifica se o utilizador está autenticado
         if (!Auth::check()) {
             return response()->json([
                 'success' => false,
@@ -25,17 +24,15 @@ class DonationController extends Controller
         Log::info('Nova doação recebida', $request->all());
 
         try {
-            // Valida os dados do request
             $validatedData = $request->validate([
                 'title' => 'required|string|max:500',
                 'description' => 'required|string|max:1000',
-                'document' => 'nullable|string', // Imagens em base64
+                'document' => 'nullable|string',
                 'contact' => 'required|numeric',
                 'category_id' => 'required|integer|exists:itemcategory,category_id',
                 'status_id' => 'required|integer|exists:donationstatus,status_id',
             ]);
 
-            // Cria a doação com estado inicial 1 (pendente)
             $donation = Donation::create([
                 'created_by' => Auth::id(),
                 'date' => now(),
@@ -55,7 +52,6 @@ class DonationController extends Controller
 
         } catch (\Illuminate\Validation\ValidationException $e) {
             Log::error('Erros de validação:', $e->errors());
-
             return response()->json([
                 'success' => false,
                 'message' => 'Erro de validação.',
@@ -64,7 +60,6 @@ class DonationController extends Controller
 
         } catch (\Exception $e) {
             Log::error('Erro ao registar doação: ' . $e->getMessage());
-
             return response()->json([
                 'success' => false,
                 'message' => 'Erro ao registar a doação: ' . $e->getMessage()
@@ -72,9 +67,6 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Lista todas as doações do utilizador autenticado
-     */
     public function userDonations()
     {
         try {
@@ -98,12 +90,8 @@ class DonationController extends Controller
         }
     }
 
-    /**
-     * Devolve os detalhes de uma doação específica
-     */
     public function show($id)
     {
-        // Carrega a doação juntamente com os dados do doador
         $donation = Donation::with('donor')->find($id);
 
         if (!$donation) {
@@ -124,92 +112,152 @@ class DonationController extends Controller
         ]);
     }
 
-    /**
-     * Lista todas as doações com status_id = 3 (Aprovadas)
-     */
     public function index()
     {
         return response()->json(Donation::where('status_id', 3)->get());
     }
 
-    /**
-     * Lista os pedidos (doações solicitadas) feitos pelo utilizador autenticado
-     */
     public function userRequests()
     {
-        try {
-            if (!Auth::check()) {
-                return response()->json(['error' => 'Não autenticado'], 401);
-            }
+        $userId = Auth::id();
 
-            $userId = Auth::id();
+        $donations = Donation::where('requester', $userId)
+            ->orderByDesc('date')
+            ->with('donor')
+            ->get();
 
-            // Vai buscar as doações onde o utilizador é o requester
-            $requests = Donation::with('donor')->where('requester', $userId)->get();
-
-            return response()->json($requests);
-
-        } catch (\Exception $e) {
-            \Log::error("Erro ao buscar pedidos do utilizador: " . $e->getMessage());
-            return response()->json(['error' => 'Erro interno: ' . $e->getMessage()], 500);
-        }
+        return response()->json($donations);
     }
 
-    /**
-     * Solicita uma doação (altera status para 4 e define requester)
-     */
     public function requestDonation($id)
     {
-        if (!Auth::check()) {
-            return response()->json(['error' => 'Não autenticado'], 401);
-        }
+        $donation = Donation::findOrFail($id);
+        $user = Auth::user();
 
-        $donation = Donation::find($id);
-        if (!$donation) {
-            return response()->json(['error' => 'Doação não encontrada'], 404);
-        }
-
-        // Atualiza o estado e define quem a solicitou
         $donation->status_id = 4;
         $donation->requester = Auth::id();
         $donation->save();
 
-        return response()->json(['message' => 'Doação solicitada com sucesso']);
+        try {
+            Notification::create([
+                'user_id' => $donation->created_by,
+                'title' => 'Nova solicitação',
+                'message' => $user->name . " solicitou a doação: " . $donation->title,
+                'date' => Carbon::now(),
+                'idstatus' => 1,
+            ]);
+            Log::info("Notificação criada com sucesso.");
+        } catch (\Exception $e) {
+            Log::error("Erro ao criar notificação: " . $e->getMessage());
+        }
+
+        return response()->json(['message' => 'Solicitação feita com sucesso']);
     }
 
-    /**
-     * Atualiza uma doação (apenas se for o criador e estiver nos estados 1, 2 ou 3)
-     */
     public function update(Request $request, $id)
     {
         $donation = Donation::find($id);
     
         if (!$donation) {
-            return response()->json(['error' => 'Doação não encontrada.'], 404);
+            return response()->json([
+                'success' => false,
+                'message' => 'Doação não encontrada.'
+            ], 404);
         }
     
         if ($donation->created_by !== Auth::id()) {
-            return response()->json(['error' => 'Acesso não autorizado.'], 403);
+            return response()->json([
+                'success' => false,
+                'message' => 'Acesso não autorizado.'
+            ], 403);
         }
     
-        if (!in_array($donation->status_id, [1, 2, 3])) {
-            return response()->json(['error' => 'Esta doação não pode ser editada.'], 403);
+        if (!in_array($donation->status_id, [1, 2, 3, 4, 6, 7])) {
+            return response()->json([
+                'success' => false,
+                'message' => 'Esta doação não pode ser editada.'
+            ], 403);
         }
     
         $validated = $request->validate([
-            'title' => 'required|string|max:500',
-            'description' => 'required|string|max:1000',
-            'contact' => 'required|numeric',
-            'category_id' => 'required|integer|exists:itemcategory,category_id',
-            'document' => 'nullable|string', // 👈 necessário para atualizar imagens
+            'title' => 'sometimes|required|string|max:500',
+            'description' => 'sometimes|required|string|max:1000',
+            'contact' => 'sometimes|required|numeric',
+            'category_id' => 'sometimes|required|integer|exists:itemcategory,category_id',
+            'status_id' => 'sometimes|required|integer|in:1,2,3,4,5,6,7',
+            'document' => 'sometimes|nullable|string',
         ]);
     
-        $donation->update([
-            ...$validated,
-            'status_id' => 1,
-        ]);
+        $donation->update($validated);
     
-        return response()->json(['message' => 'Doação atualizada com sucesso.']);
+        // ✅ Notificações
+        if (isset($validated['status_id'])) {
+            $status = $validated['status_id'];
+    
+            // Se a doação passou para "Em Recolha" ou "A Ser Entregue"
+            if (in_array($status, [6, 7]) && $donation->requester) {
+                $entregaTexto = $status === 6
+                    ? 'será recolhida por um voluntário'
+                    : 'será entregue pelo próprio doador';
+    
+                // Notificar o requester
+                Notification::create([
+                    'user_id' => $donation->requester,
+                    'title' => 'Entrega da Doação',
+                    'message' => "A doação '{$donation->title}' {$entregaTexto}.",
+                    'date' => Carbon::now(),
+                    'idstatus' => 1
+                ]);
+    
+                // Se for recolha por voluntário, notificar todos os voluntários
+                if ($status === 6) {
+                    $volunteers = User::where('role_id', 2)->get();
+                    foreach ($volunteers as $volunteer) {
+                        Notification::create([
+                            'user_id' => $volunteer->user_id,
+                            'title' => 'Nova entrega disponível',
+                            'message' => "Está disponível uma doação para recolher: '{$donation->title}'.",
+                            'date' => Carbon::now(),
+                            'idstatus' => 1
+                        ]);
+                    }
+                }
+            }
+    
+            // ✅ Se passou para Terminado (status 5), notificar o requester
+            if ($status === 5 && $donation->requester) {
+                Notification::create([
+                    'user_id' => $donation->requester,
+                    'title' => 'Doação Entregue',
+                    'message' => "A doação '{$donation->title}' foi entregue com sucesso.",
+                    'date' => Carbon::now(),
+                    'idstatus' => 1
+                ]);
+            }
+        }
+    
+        return response()->json([
+            'success' => true,
+            'message' => 'Doação atualizada com sucesso.'
+        ]);
     }
+
+    public function destroy($id)
+{
+    $donation = \App\Models\Donation::find($id);
+
+    if (!$donation) {
+        return response()->json(['message' => 'Doação não encontrada.'], 404);
+    }
+
+    if ($donation->created_by !== auth()->id()) {
+        return response()->json(['message' => 'Acesso não autorizado.'], 403);
+    }
+
+    $donation->delete();
+
+    return response()->json(['message' => 'Doação eliminada com sucesso.'], 200);
+}
+
     
 }
