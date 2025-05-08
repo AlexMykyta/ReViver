@@ -1,6 +1,8 @@
 "use client"
 
 import { createContext, useContext, useState, useEffect, type ReactNode } from "react"
+import { useRouter } from "next/navigation"
+
 
 type UserRole = "user" | "admin" | "volunteer"
 
@@ -66,12 +68,15 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   }
 
+  const router = useRouter()
   // Logout function
   const logout = () => {
     setUser(null)
     setIsAdmin(false)
     setIsVolunteer(false)
-    localStorage.removeItem("auth_token") // Remove token from localStorage
+    localStorage.removeItem("auth_token") 
+    router.push("/") // Redireciona para a home
+
   }
 
   return (

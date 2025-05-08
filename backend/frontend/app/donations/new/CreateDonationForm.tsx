@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label"
 import { Button } from "@/components/ui/button"
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Upload } from "lucide-react"
+import { CheckCircle } from "lucide-react"
 
 export function CreateDonationForm() {
   const router = useRouter()
@@ -23,8 +24,8 @@ export function CreateDonationForm() {
   const [documents, setDocuments] = useState<string[]>([])
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isAuthenticated, setIsAuthenticated] = useState(false)
-  const [imageError, setImageError] = useState(false) 
-
+  const [imageError, setImageError] = useState(false)
+  const [showModal, setShowModal] = useState(false)
 
   useEffect(() => {
     const token = localStorage.getItem("auth_token")
@@ -66,7 +67,7 @@ export function CreateDonationForm() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    setImageError(false) // limpar erro anterior
+    setImageError(false)
 
     const token = localStorage.getItem("auth_token")
     if (!token) return
@@ -99,16 +100,30 @@ export function CreateDonationForm() {
       const data = await res.json()
 
       if (res.status === 201) {
-        router.push("/donations")
+        setShowModal(true)
+        setTimeout(() => {
+          setShowModal(false)
+          router.push("/donations")
+        }, 3000)
       }
     } finally {
       setIsSubmitting(false)
     }
   }
 
-
   return (
     <form onSubmit={handleSubmit} className="space-y-6">
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50">
+          <div className="bg-white p-6 rounded shadow-lg flex flex-col items-center">
+            <CheckCircle className="text-green-500 w-12 h-12 mb-4" />
+            <p className="mb-4">Doação publicada com sucesso!</p>
+            <button onClick={() => setShowModal(false)} className="bg-blue-500 text-white px-4 py-2 rounded">
+              OK
+            </button>
+          </div>
+        </div>
+      )}
       <div className="space-y-2">
         <Label htmlFor="title">Título</Label>
         <Input id="title" value={title} onChange={(e) => setTitle(e.target.value)} required />
@@ -195,7 +210,6 @@ export function CreateDonationForm() {
           onChange={handleFileSelect}
         />
       </div>
-
 
       <Button type="submit" disabled={isSubmitting || !isAuthenticated} className="w-full">
         {!isAuthenticated ? "Inicie sessão para publicar" : isSubmitting ? "A enviar..." : "Publicar Doação"}
