@@ -1,13 +1,16 @@
-"use client";
+"use client"
 
 import Link from "next/link"
-import { ArrowLeft, Gift } from "lucide-react"
+import { useState } from "react"
+import { ArrowLeft, Gift, CheckCircle } from "lucide-react"
 
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { EditDonationForm } from "@/app/edit/[id]/EditDonationForm" // <- Certifica-te que o caminho está correto!
+import { EditDonationForm } from "@/app/edit/[id]/EditDonationForm"
 import { UserNav } from "@/components/user-nav"
 
 export default function EditDonationPage() {
+  const [showModal, setShowModal] = useState(false)
+
   return (
     <div className="flex flex-col min-h-screen">
       <header className="px-4 lg:px-6 h-16 flex items-center border-b">
@@ -41,10 +44,22 @@ export default function EditDonationPage() {
             <CardTitle>Informações</CardTitle>
           </CardHeader>
           <CardContent className="space-y-6">
-            <EditDonationForm />
+            <EditDonationForm onSuccess={() => setShowModal(true)} />
           </CardContent>
         </Card>
       </main>
+
+      {showModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg flex flex-col items-center">
+            <CheckCircle className="text-green-500 w-12 h-12 mb-4" />
+            <p className="mb-4">Doação atualizada com sucesso!</p>
+            <Link href="/my-donations">
+              <button className="bg-blue-500 text-white px-4 py-2 rounded">OK</button>
+            </Link>
+          </div>
+        </div>
+      )}
     </div>
   )
 }

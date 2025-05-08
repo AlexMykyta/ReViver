@@ -6,9 +6,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
 class Donation extends Model
-
 {
-    protected $table = 'donation'; // <- adiciona esta linha
+    protected $table = 'donation';
 
     use HasFactory;
 
@@ -25,10 +24,12 @@ class Donation extends Model
         'description',
         'document',
         'contact',
+        'requester', 
     ];
 
     public function donor()
-{
-    return $this->belongsTo(\App\Models\User::class, 'created_by', 'user_id');
+    {
+        return $this->belongsTo(\App\Models\User::class, 'created_by', 'user_id');
+    }
 }
-}
+

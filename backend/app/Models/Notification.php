@@ -6,12 +6,17 @@ use Illuminate\Database\Eloquent\Model;
 
 class Notification extends Model
 {
+    // Indica explicitamente o nome da tabela
+    protected $table = 'notification';
+    public $timestamps = false;
     protected $primaryKey = 'notification_id';
+
     protected $fillable = [
         'user_id',
         'message',
         'date',
-        'status_id'
+        'idstatus',
+        'title'
     ];
 
     public function user()
@@ -21,6 +26,6 @@ class Notification extends Model
 
     public function status()
     {
-        return $this->belongsTo(NotificationStatus::class, 'status_id');
+        return $this->belongsTo(NotificationStatus::class, 'idstatus');
     }
 }

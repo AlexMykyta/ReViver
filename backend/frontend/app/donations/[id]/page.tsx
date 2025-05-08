@@ -3,7 +3,9 @@
 import { useEffect, useState } from "react"
 import Link from "next/link"
 import { useParams, useRouter } from "next/navigation"
-import { Gift, ArrowLeft, User, ChevronLeft, ChevronRight } from "lucide-react"
+import {
+  Gift, ArrowLeft, User, ChevronLeft, ChevronRight, CheckCircle
+} from "lucide-react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Separator } from "@/components/ui/separator"
@@ -29,6 +31,7 @@ export default function DonationDetailsPage() {
   const [similarDonations, setSimilarDonations] = useState<Donation[]>([])
   const [error, setError] = useState("")
   const [mainImageIndex, setMainImageIndex] = useState(0)
+  const [showSuccessModal, setShowSuccessModal] = useState(false)
 
   useEffect(() => {
     const fetchDonation = async () => {
@@ -82,6 +85,7 @@ export default function DonationDetailsPage() {
     try {
       const token = localStorage.getItem("auth_token")
       if (!token || !donation) return
+
       const res = await fetch(`http://127.0.0.1:8000/api/donations/${donation.donation_id}/request`, {
         method: "PUT",
         headers: {
@@ -89,9 +93,14 @@ export default function DonationDetailsPage() {
           "Content-Type": "application/json"
         },
       })
+
       if (!res.ok) throw new Error("Erro ao solicitar doação")
-      alert("Pedido efetuado com sucesso!")
-      router.push("/my-requests")
+
+      setShowSuccessModal(true)
+      setTimeout(() => {
+        setShowSuccessModal(false)
+        router.push("/my-requests")
+      }, 3000)
     } catch (err) {
       console.error(err)
       alert("Erro ao solicitar doação.")
@@ -100,6 +109,18 @@ export default function DonationDetailsPage() {
 
   return (
     <div className="flex flex-col min-h-screen">
+      {showSuccessModal && (
+        <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-50 z-50">
+          <div className="bg-white p-6 rounded shadow-lg flex flex-col items-center">
+            <CheckCircle className="text-green-500 w-12 h-12 mb-4" />
+            <p className="mb-4">Solicitação enviada com sucesso!</p>
+            <button onClick={() => setShowSuccessModal(false)} className="bg-blue-500 text-white px-4 py-2 rounded">
+              OK
+            </button>
+          </div>
+        </div>
+      )}
+
       <header className="header px-4 lg:px-6 h-16 flex items-center">
         <Link href="/" className="flex items-center gap-2 font-semibold">
           <span>ReViver</span>

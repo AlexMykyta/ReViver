@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useRef, useState } from "react"
-import { useParams, useRouter } from "next/navigation"
+import { useParams } from "next/navigation"
 import { Input } from "@/components/ui/input"
 import { Textarea } from "@/components/ui/textarea"
 import { Label } from "@/components/ui/label"
@@ -10,11 +10,13 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
 import { Upload } from "lucide-react"
 import { useToast } from "@/components/ui/use-toast"
 
-export function EditDonationForm() {
-  const { id } = useParams()
-  const router = useRouter()
-  const { toast } = useToast()
+interface Props {
+  onSuccess: () => void
+}
 
+export function EditDonationForm({ onSuccess }: Props) {
+  const { id } = useParams()
+  const { toast } = useToast()
   const fileInputRef = useRef<HTMLInputElement>(null)
 
   const [title, setTitle] = useState("")
@@ -102,7 +104,9 @@ export function EditDonationForm() {
       }),
     })
 
-    if (res.ok) router.push("/my-donations")
+    if (res.ok) {
+      onSuccess() // chama o popup de sucesso da página principal
+    }
   }
 
   if (loading) return <p>A carregar...</p>
