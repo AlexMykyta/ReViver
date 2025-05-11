@@ -44,10 +44,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </Link>
         </div>
         <nav className="flex-1 overflow-auto py-4 px-2 space-y-1">
-          <Link href="/admin" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
-            <LayoutDashboard className="h-5 w-5" />
-            Dashboard
-          </Link>
           <Link href="/admin/approvals" className="flex items-center gap-3 rounded-md px-3 py-2 text-sm font-medium hover:bg-muted">
             <Gift className="h-5 w-5" />
             Pedidos Pendentes

@@ -32,26 +32,47 @@ export default function ApprovalsPage() {
   const [searchTerm, setSearchTerm] = useState("")
   const [mounted, setMounted] = useState(false)
   const [volunteers, setVolunteers] = useState<Volunteer[]>([])
-  const [donations, setDonations] = useState<Donation[]>([
-    {
-      id: 1,
-      title: "Cesta Básica",
-      category: "Comida",
-      donor: "Maria Silva",
-      date: "2025-03-15",
-      status: "pendente",
-    },
-    {
-      id: 2,
-      title: "Roupas Infantis",
-      category: "Roupas",
-      donor: "João Santos",
-      date: "2025-03-16",
-      status: "pendente",
-    },
-  ])
+  const [donations, setDonations] = useState<Donation[]>([])
   const [loading, setLoading] = useState(true)
   const router = useRouter()
+
+
+    useEffect(() => {
+    setMounted(true)
+    const fetchDonations = async () => {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+        const response = await fetch("http://localhost:8000/api/pending-donations", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) {
+          throw new Error("Erro ao carregar voluntários")
+        }
+        const data = await response.json()
+        console.log("Dados recebidos:", data)
+  
+        setDonations(Array.isArray(data) ? data.map((v: any) => ({
+          id: v.donation_id,
+          title: v.title,
+          category: v.category.category_name,
+          donor: v.donor.name,
+          date: v.contact,
+          status: "pendente",
+        })) : [])
+  
+      } catch (error) {
+        toast({ title: "Erro ao carregar voluntários", description: "Não foi possível obter os dados." })
+        setDonations([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDonations()
+  }, [])
 
   useEffect(() => {
     setMounted(true)
@@ -88,30 +109,50 @@ export default function ApprovalsPage() {
     fetchVolunteers()
   }, [])
 
-  const handleApproveDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "aprovado" } : donation
-      )
-    )
-    toast({
-      title: "Doação aprovada",
-      description: "A doação foi aprovada com sucesso.",
-      variant: "default",
-    })
-  }
 
-  const handleRejectDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "rejeitado" } : donation
+
+  const handleDonationDecision = async (id: number, approve: boolean) => {
+      console.log(id);
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+      const response = await fetch(`http://localhost:8000/api/donations/${id}/decision`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: approve ? 1 : 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao atualizar doação")
+      }
+
+      setDonations(
+        donations.map((donation) =>
+          donation.id === id
+            ? { ...donation, status: approve ? "aprovado" : "rejeitado" }
+            : donation
+        )
       )
-    )
-    toast({
-      title: "Doação rejeitada",
-      description: "A doação foi rejeitada.",
-      variant: "destructive",
-    })
+
+      toast({
+        title: `Doação ${approve ? "aprovada" : "rejeitada"}`,
+        description: `A doação foi ${approve ? "aprovada com sucesso." : "rejeitada."}`,
+        variant: approve ? "default" : "destructive",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    }
   }
 
   const handleApproveVolunteer = async (id: number) => {
@@ -253,11 +294,11 @@ export default function ApprovalsPage() {
                         <div className="text-sm text-muted-foreground">{donation.category} • {donation.donor} • {donation.date}</div>
                       </div>
                       <div className="flex items-center gap-2">
-                        <Button variant="outline" size="sm" onClick={() => handleRejectDonation(donation.id)}>
+                        <Button variant="outline" size="sm" onClick={() => handleDonationDecision(donation.id, false)}>
                           <XCircle className="mr-2 h-4 w-4 text-red-500" />
                           Rejeitar
                         </Button>
-                        <Button size="sm" onClick={() => handleApproveDonation(donation.id)}>
+                        <Button size="sm" onClick={() => handleDonationDecision(donation.id, true)}>
                           <CheckCircle className="mr-2 h-4 w-4" />
                           Aprovar
                         </Button>
