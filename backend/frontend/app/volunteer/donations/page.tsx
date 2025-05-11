@@ -1,397 +1,311 @@
 "use client"
 
 import { useState, useEffect } from "react"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { DropdownMenu, DropdownMenuContent, DropdownMenuItem, DropdownMenuTrigger } from "@/components/ui/dropdown-menu"
-import { Badge } from "@/components/ui/badge"
-import { CheckCircle, Clock, Eye, MoreHorizontal, Search, Truck, XCircle } from "lucide-react"
+import { Truck } from "lucide-react";
+import { CheckCircle, XCircle, Search } from "lucide-react"
 import { Input } from "@/components/ui/input"
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
 import { useToast } from "@/components/ui/use-toast"
-import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog"
+import { useRouter } from "next/navigation"
 
-type DonationStatus = "pendente" | "recebendo" | "aprovado" | "rejeitado"
+type ApprovalStatus = "pendente" | "recebendo" | "aprovado" | "rejeitado"
 
 type Donation = {
-  id: number
+  donation_id: number
   title: string
   category: string
-  date: string
-  status: DonationStatus
   donor: string
-  description: string
+  date: string
+  status: ApprovalStatus
 }
 
-export default function VolunteerDonationsPage() {
+type OrdersIncollection = {
+  donation_id: number
+  title: string
+  category: string
+  donor: string
+  date: string
+  status: ApprovalStatus
+  requester : string
+}
+
+type Volunteer = {
+  id: number
+  motivation: string
+  status: ApprovalStatus
+  name?: string
+}
+
+export default function ApprovalsPage() {
   const { toast } = useToast()
   const [searchTerm, setSearchTerm] = useState("")
-  const [statusFilter, setStatusFilter] = useState<string>("all")
-  const [selectedDonation, setSelectedDonation] = useState<Donation | null>(null)
-  const [detailsOpen, setDetailsOpen] = useState(false)
   const [mounted, setMounted] = useState(false)
+  const [volunteers, setVolunteers] = useState<Volunteer[]>([])
+  const [donations, setDonations] = useState<Donation[]>([])
+    const [ordersIncollection, setOrdersIncollection] = useState<OrdersIncollection[]>([])
 
-  // Fix for hydration issues - only render client-side content after mount
+  const [loading, setLoading] = useState(true)
+  const router = useRouter()
+
   useEffect(() => {
     setMounted(true)
+    const fetchOrdersIncollection = async () => {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+        const response = await fetch("http://localhost:8000/api/orders-incollection", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) {
+          throw new Error("Erro ao carregar pedidos")
+        }
+        const data = await response.json()
+        console.log("Dados recebidos:", data)
+  
+        setOrdersIncollection(Array.isArray(data) ? data.map((v: any) => ({
+          donation_id: v.donation_id,
+          title: v.title,
+          category: v.category.category_name,
+          donor: v.donor.name,
+          date: v.contact,
+          status: "pendente",
+          requester: v.requester
+        })) : [])
+  
+      } catch (error) {
+        toast({ title: "Erro ao carregar pedidos", description: "Não foi possível obter os dados." })
+        setOrdersIncollection([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchOrdersIncollection()
   }, [])
 
-  // Mock data for donations
-  const [donations, setDonations] = useState<Donation[]>([
-    {
-      id: 1,
-      title: "Cesta Básica",
-      category: "Comida",
-      date: "2025-03-15",
-      status: "pendente",
-      donor: "Maria Silva",
-      description: "Cesta com alimentos não perecíveis para uma família de 4 pessoas.",
-    },
-    {
-      id: 2,
-      title: "Roupas Infantis",
-      category: "Roupas",
-      date: "2025-03-16",
-      status: "pendente",
-      donor: "João Santos",
-      description: "Conjunto de roupas infantis em bom estado para crianças de 3-5 anos.",
-    },
-    {
-      id: 3,
-      title: "Utensílios de Cozinha",
-      category: "Casa",
-      date: "2025-03-14",
-      status: "recebendo",
-      donor: "Ana Oliveira",
-      description: "Kit com panelas, talheres e outros utensílios de cozinha em bom estado.",
-    },
-    {
-      id: 4,
-      title: "Cobertores",
-      category: "Roupas",
-      date: "2025-03-17",
-      status: "pendente",
-      donor: "Carlos Pereira",
-      description: "Cobertores em bom estado para o inverno.",
-    },
-    {
-      id: 5,
-      title: "Alimentos não perecíveis",
-      category: "Comida",
-      date: "2025-03-13",
-      status: "rejeitado",
-      donor: "Juliana Costa",
-      description: "Pacote com arroz, feijão, macarrão e outros alimentos não perecíveis.",
-    },
-    {
-      id: 6,
-      title: "Móveis para sala",
-      category: "Casa",
-      date: "2025-03-18",
-      status: "recebendo",
-      donor: "Roberto Almeida",
-      description: "Sofá de 3 lugares e mesa de centro em bom estado.",
-    },
-  ])
+  useEffect(() => {
+    setMounted(true)
+    const fetchDonations = async () => {
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+        const response = await fetch("http://localhost:8000/api/pending-donations", {
+          method: "GET",
+          headers: { Authorization: `Bearer ${token}` },
+        })
+        if (!response.ok) {
+          throw new Error("Erro ao carregar voluntários")
+        }
+        const data = await response.json()
+        console.log("Dados recebidos:", data)
+  
+        setDonations(Array.isArray(data) ? data.map((v: any) => ({
+          donation_id: v.donation_id,
+          title: v.title,
+          category: v.category.category_name,
+          donor: v.donor.name,
+          date: v.contact,
+          status: "pendente",
+        })) : [])
+  
+      } catch (error) {
+        toast({ title: "Erro ao carregar voluntários", description: "Não foi possível obter os dados." })
+        setDonations([])
+      } finally {
+        setLoading(false)
+      }
+    }
+    fetchDonations()
+  }, [])
 
-  // Don't render until client-side hydration is complete
-  if (!mounted) {
-    return null
+     const handleDonationDecision = async (id: number, approve: boolean) => {
+      console.log(id);
+      const token = localStorage.getItem("auth_token")
+      if (!token) {
+        throw new Error("Sessão expirada. Faça login novamente.")
+      }
+      try {
+      const response = await fetch(`http://localhost:8000/api/donations/${id}/decision`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          Authorization: `Bearer ${token}`,
+        },
+        body: JSON.stringify({
+          status: approve ? 1 : 0,
+        }),
+      });
+
+      if (!response.ok) {
+        throw new Error("Erro ao atualizar doação")
+      }
+
+      setDonations(
+        donations.map((donation) =>
+          donation.donation_id === id
+            ? { ...donation, status: approve ? "aprovado" : "rejeitado" }
+            : donation
+        )
+      )
+
+      toast({
+        title: `Doação ${approve ? "aprovada" : "rejeitada"}`,
+        description: `A doação foi ${approve ? "aprovada com sucesso." : "rejeitada."}`,
+        variant: approve ? "default" : "destructive",
+      })
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: (error as Error).message,
+        variant: "destructive",
+      })
+    }
   }
 
-  // Filter donations based on search term and status filter
-  const filteredDonations = donations.filter((donation) => {
-    const matchesSearch =
+
+  const handleApproveVolunteer = async (id: number) => {
+    try {
+      const token = localStorage.getItem("auth_token");
+      if (!token) {
+        toast({ title: "Erro", description: "Faça login novamente", variant: "destructive" });
+        return;
+      }
+  
+      const response = await fetch(`http://localhost:8000/api/donations/${id}/delivering`, {
+        method: "PUT",
+        headers: {
+          "Content-Type": "application/json",
+          "Authorization": `Bearer ${token}`
+        },
+      });
+  
+      const data = await response.json();
+      
+      if (!response.ok) {
+        throw new Error(data.message || "Erro ao aprovar voluntário");
+      }
+  
+      /*setVolunteers(volunteers.map(v => 
+        v.id === id ? { ...v, status: "aprovado" } : v
+      ));
+
+      setVolunteers(prev => prev.filter(v => v.id !== id));*/
+      
+      toast({ 
+        title: "Sucesso", 
+        description: "Voluntário aprovado com sucesso",
+        variant: "default" 
+      });
+  
+    } catch (error) {
+      toast({
+        title: "Erro",
+        description: error instanceof Error ? error.message : "Erro desconhecido",
+        variant: "destructive"
+      });
+    }
+  };
+  
+
+  if (!mounted) return null
+  if (loading) return <p>Carregando pedidos...</p>
+
+  const filteredOrdersIncollection = ordersIncollection.filter(
+    (orderIncollection) =>
+      orderIncollection.title.toLowerCase().includes(searchTerm.toLowerCase())
+  )
+
+  const filteredDonations = donations.filter(
+    (donation) =>
       donation.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
       donation.donor.toLowerCase().includes(searchTerm.toLowerCase())
-
-    const matchesStatus = statusFilter === "all" || donation.status === statusFilter
-
-    return matchesSearch && matchesStatus
-  })
-
-  // Handle donation approval for warehouse receiving
-  const handleApproveDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "recebendo" as DonationStatus } : donation,
-      ),
-    )
-
-    toast({
-      title: "Doação aprovada para recebimento",
-      description: "A doação foi aprovada e está aguardando chegada no armazém.",
-      variant: "default",
-    })
-  }
-
-  // Handle donation publishing after it arrives at warehouse
-  const handlePublishDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "aprovado" as DonationStatus } : donation,
-      ),
-    )
-
-    toast({
-      title: "Doação publicada",
-      description: "A doação foi verificada e publicada na plataforma.",
-      variant: "default",
-    })
-  }
-
-  // Handle donation rejection
-  const handleRejectDonation = (id: number) => {
-    setDonations(
-      donations.map((donation) =>
-        donation.id === id ? { ...donation, status: "rejeitado" as DonationStatus } : donation,
-      ),
-    )
-
-    toast({
-      title: "Doação rejeitada",
-      description: "A doação foi rejeitada e não será exibida na plataforma.",
-      variant: "destructive",
-    })
-  }
-
-  // View donation details
-  const handleViewDetails = (donation: Donation) => {
-    setSelectedDonation(donation)
-    setDetailsOpen(true)
-  }
-
-  // Format date to local format
-  const formatDate = (dateString: string) => {
-    const date = new Date(dateString)
-    return date.toLocaleDateString("pt-BR")
-  }
+  )
 
   return (
     <div className="space-y-6">
       <div className="flex flex-col md:flex-row justify-between gap-4">
-        <h1 className="text-2xl font-bold tracking-tight">Gerenciar Doações</h1>
-        <div className="flex flex-col sm:flex-row gap-4">
-          <div className="relative">
-            <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-            <Input
-              type="search"
-              placeholder="Buscar doações..."
-              className="w-full sm:w-[250px] pl-8"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <Select value={statusFilter} onValueChange={setStatusFilter}>
-            <SelectTrigger className="w-full sm:w-[180px]">
-              <SelectValue placeholder="Filtrar por status" />
-            </SelectTrigger>
-            <SelectContent>
-              <SelectItem value="all">Todos os status</SelectItem>
-              <SelectItem value="pendente">Pendentes</SelectItem>
-              <SelectItem value="recebendo">Recebendo</SelectItem>
-              <SelectItem value="aprovado">Aprovados</SelectItem>
-              <SelectItem value="rejeitado">Rejeitados</SelectItem>
-            </SelectContent>
-          </Select>
-        </div>
+        <h1 className="text-2xl font-bold tracking-tight">Aprovações Pendentes</h1>
       </div>
 
-      <Card>
-        <CardHeader>
-          <CardTitle>Doações</CardTitle>
-          <CardDescription>Gerencie as doações cadastradas na plataforma. Aprove ou rejeite itens.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>ID</TableHead>
-                <TableHead>Item</TableHead>
-                <TableHead>Categoria</TableHead>
-                <TableHead>Data</TableHead>
-                <TableHead>Doador</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {filteredDonations.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={8} className="text-center py-6 text-muted-foreground">
-                    Nenhuma doação encontrada
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredDonations.map((donation) => (
-                  <TableRow key={donation.id}>
-                    <TableCell className="font-medium">{donation.id}</TableCell>
-                    <TableCell>{donation.title}</TableCell>
-                    <TableCell>{donation.category}</TableCell>
-                    <TableCell>{formatDate(donation.date)}</TableCell>
-                    <TableCell>{donation.donor}</TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          donation.status === "aprovado"
-                            ? "success"
-                            : donation.status === "pendente"
-                              ? "outline"
-                              : donation.status === "recebendo"
-                                ? "secondary"
-                                : "destructive"
-                        }
-                        className="flex w-fit items-center gap-1"
-                      >
-                        {donation.status === "aprovado" && <CheckCircle className="h-3 w-3" />}
-                        {donation.status === "pendente" && <Clock className="h-3 w-3" />}
-                        {donation.status === "recebendo" && <Truck className="h-3 w-3" />}
-                        {donation.status === "rejeitado" && <XCircle className="h-3 w-3" />}
-                        {donation.status === "aprovado" && "Aprovado"}
-                        {donation.status === "pendente" && "Pendente"}
-                        {donation.status === "recebendo" && "Recebendo"}
-                        {donation.status === "rejeitado" && "Rejeitado"}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <DropdownMenu>
-                        <DropdownMenuTrigger asChild>
-                          <Button variant="ghost" size="icon">
-                            <MoreHorizontal className="h-4 w-4" />
-                            <span className="sr-only">Abrir menu</span>
-                          </Button>
-                        </DropdownMenuTrigger>
-                        <DropdownMenuContent align="end">
-                          <DropdownMenuItem onClick={() => handleViewDetails(donation)}>
-                            <Eye className="mr-2 h-4 w-4" />
-                            Ver detalhes
-                          </DropdownMenuItem>
-                          {donation.status === "pendente" && (
-                            <>
-                              <DropdownMenuItem onClick={() => handleApproveDonation(donation.id)}>
-                                <Truck className="mr-2 h-4 w-4 text-blue-500" />
-                                Aprovar para recebimento
-                              </DropdownMenuItem>
-                              <DropdownMenuItem onClick={() => handleRejectDonation(donation.id)}>
-                                <XCircle className="mr-2 h-4 w-4 text-red-500" />
-                                Rejeitar
-                              </DropdownMenuItem>
-                            </>
-                          )}
-                          {donation.status === "recebendo" && (
-                            <DropdownMenuItem onClick={() => handlePublishDonation(donation.id)}>
-                              <CheckCircle className="mr-2 h-4 w-4 text-green-500" />
-                              Publicar
-                            </DropdownMenuItem>
-                          )}
-                        </DropdownMenuContent>
-                      </DropdownMenu>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
-        </CardContent>
-      </Card>
+      <Tabs defaultValue="donations">
+        <TabsList>
+          <TabsTrigger value="donations">Doações ({filteredDonations.length})</TabsTrigger>
+          <TabsTrigger value="volunteers">Pedidos ({filteredOrdersIncollection.length})</TabsTrigger>
+        </TabsList>
 
-      {/* Donation Details Dialog */}
-      <Dialog open={detailsOpen} onOpenChange={setDetailsOpen}>
-        <DialogContent className="sm:max-w-[500px]">
-          <DialogHeader>
-            <DialogTitle>Detalhes da Doação</DialogTitle>
-            <DialogDescription>Informações completas sobre o item doado.</DialogDescription>
-          </DialogHeader>
-          {selectedDonation && (
-            <div className="space-y-4 py-4">
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Título:</span>
-                <span className="col-span-3">{selectedDonation.title}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Categoria:</span>
-                <span className="col-span-3">{selectedDonation.category}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Doador:</span>
-                <span className="col-span-3">{selectedDonation.donor}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Data:</span>
-                <span className="col-span-3">{formatDate(selectedDonation.date)}</span>
-              </div>
-              <div className="grid grid-cols-4 items-start gap-4">
-                <span className="text-sm font-medium">Descrição:</span>
-                <span className="col-span-3">{selectedDonation.description}</span>
-              </div>
-              <div className="grid grid-cols-4 items-center gap-4">
-                <span className="text-sm font-medium">Status:</span>
-                <span className="col-span-3">
-                  <Badge
-                    variant={
-                      selectedDonation.status === "aprovado"
-                        ? "success"
-                        : selectedDonation.status === "pendente"
-                          ? "outline"
-                          : selectedDonation.status === "recebendo"
-                            ? "secondary"
-                            : "destructive"
-                    }
-                    className="flex w-fit items-center gap-1"
-                  >
-                    {selectedDonation.status === "aprovado" && <CheckCircle className="h-3 w-3" />}
-                    {selectedDonation.status === "pendente" && <Clock className="h-3 w-3" />}
-                    {selectedDonation.status === "recebendo" && <Truck className="h-3 w-3" />}
-                    {selectedDonation.status === "rejeitado" && <XCircle className="h-3 w-3" />}
-                    {selectedDonation.status === "aprovado" && "Aprovado"}
-                    {selectedDonation.status === "pendente" && "Pendente"}
-                    {selectedDonation.status === "recebendo" && "Recebendo"}
-                    {selectedDonation.status === "rejeitado" && "Rejeitado"}
-                  </Badge>
-                </span>
-              </div>
-              <div className="flex justify-end space-x-2 pt-4">
-                {selectedDonation.status === "pendente" && (
-                  <>
-                    <Button
-                      variant="outline"
-                      onClick={() => {
-                        handleRejectDonation(selectedDonation.id)
-                        setDetailsOpen(false)
-                      }}
-                    >
-                      Rejeitar
-                    </Button>
-                    <Button
-                      onClick={() => {
-                        handleApproveDonation(selectedDonation.id)
-                        setDetailsOpen(false)
-                      }}
-                    >
-                      Aprovar para recebimento
-                    </Button>
-                  </>
-                )}
-                {selectedDonation.status === "recebendo" && (
-                  <Button
-                    onClick={() => {
-                      handlePublishDonation(selectedDonation.id)
-                      setDetailsOpen(false)
-                    }}
-                  >
-                    Publicar
-                  </Button>
-                )}
-                {selectedDonation.status !== "pendente" && selectedDonation.status !== "recebendo" && (
-                  <Button onClick={() => setDetailsOpen(false)}>Fechar</Button>
-                )}
-              </div>
-            </div>
-          )}
-        </DialogContent>
-      </Dialog>
+        <TabsContent value="donations" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Doações Pendentes</CardTitle>
+              <CardDescription>Aprove ou rejeite doações pendentes</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredDonations.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">Nenhuma doação pendente encontrada</div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredDonations.map((donation) => (
+                    <div key={donation.donation_id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <div className="font-medium">{donation.title}</div>
+                        <div className="text-sm text-muted-foreground">{donation.category} • {donation.donor} • {donation.date}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button variant="outline" size="sm" onClick={() => handleDonationDecision(donation.donation_id, false)}>
+                          <XCircle className="mr-2 h-4 w-4 text-red-500" />
+                          Rejeitar
+                        </Button>
+
+                        <Button size="sm" onClick={() => handleDonationDecision(donation.donation_id, true)}>
+                          <CheckCircle className="mr-2 h-4 w-4" />
+                          Aprovar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="volunteers" className="space-y-4 mt-4">
+          <Card>
+            <CardHeader>
+              <CardTitle>Pedidos Em Recolha</CardTitle>
+              <CardDescription>Aprove ou rejeite pedidos</CardDescription>
+            </CardHeader>
+            <CardContent>
+              {filteredOrdersIncollection.length === 0 ? (
+                <div className="text-center py-6 text-muted-foreground">Nenhum pedido pendente encontrado</div>
+              ) : (
+                <div className="space-y-4">
+                  {filteredOrdersIncollection.map((orderIncollection) => (
+                    <div key={orderIncollection.donation_id} className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0">
+                      <div className="space-y-1">
+                        <div className="font-medium">Doação: {orderIncollection.title}</div>
+                        <div className="text-sm text-muted-foreground">Requerente: {orderIncollection.requester.name}</div>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        <Button size="sm" onClick={() => handleApproveVolunteer(orderIncollection.donation_id)}>
+                          <Truck className="mr-2 h-4 w-4" />
+                          Entregar
+                        </Button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </CardContent>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
-

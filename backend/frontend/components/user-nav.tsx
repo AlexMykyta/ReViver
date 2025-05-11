@@ -174,7 +174,7 @@ export function UserNav() {
                 )}
                 {isVolunteer && (
                   <DropdownMenuItem asChild>
-                    <Link href="/volunteer">
+                    <Link href="/volunteer/donations">
                       <Clipboard className="mr-2 h-4 w-4" />
                       <span>Painel Voluntário</span>
                     </Link>

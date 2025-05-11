@@ -39,9 +39,7 @@ export default function VolunteerLayout({children,}: {children: React.ReactNode}
   }
 
   const navigation = [
-    { name: "Dashboard", href: "/volunteer", icon: LayoutDashboard },
-    { name: "Doações", href: "/volunteer/donations", icon: Gift },
-    { name: "Pedidos", href: "/volunteer/requests", icon: ShoppingCart },
+    { name: "Pedidos", href: "/volunteer/donations", icon: Gift }
   ]
 
   return (

@@ -67,6 +67,73 @@ class DonationController extends Controller
         }
     }
 
+    public function getPendingDonations(){
+        
+        if (!Auth::check()) {
+            Log::warning('Utilizador não autenticado ao tentar aceder às suas doações.');
+            return response()->json(['error' => 'Não autenticado'], 401);
+        }
+
+            $donations = Donation::where('status_id', 1)
+            ->with(['category', 'donor'])
+            ->get();
+
+        return response()->json($donations);
+    }
+
+    public function approveOrRejectDonations($id, Request $request){
+
+        if (!Auth::check()) {
+            Log::warning('Utilizador não autenticado ao tentar aceder às suas doações.');
+            return response()->json(['error' => 'Não autenticado'], 401);
+        }
+        
+        $request->validate([
+            'status' => 'required|in:0,1',
+        ]);
+        
+        $donation = Donation::findOrFail($id);
+        $donation->status_id = $request->status == 1 ? 3 : 2;
+        $donation->save();
+
+        return response()->json([
+            'message' => 'Doação atualizada com sucesso.',
+            'status' => $donation->status_id,
+        ]);
+    }
+
+    public function getOrdersIncollection(){
+        
+        if (!Auth::check()) {
+            Log::warning('Utilizador não autenticado ao tentar aceder às suas doações.');
+            return response()->json(['error' => 'Não autenticado'], 401);
+        }
+        
+        $donations = Donation::where('status_id', 6)
+        ->with(['category', 'donor', 'requester'])
+        ->get();
+
+        return response()->json($donations);
+    }
+
+    public function markDelivering($id){
+        
+        if (!Auth::check()) {
+            Log::warning('Utilizador não autenticado ao tentar aceder às suas doações.');
+            return response()->json(['error' => 'Não autenticado'], 401);
+        }
+
+        $donation = Donation::findOrFail($id);
+        $donation->status_id = 7;
+        $donation->save();
+        
+        $donations = Donation::where('status_id', 7)
+        ->with(['category', 'donor', 'requester'])
+        ->get();
+
+        return response()->json($donations);
+    }
+
     public function userDonations()
     {
         try {

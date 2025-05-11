@@ -28,12 +28,16 @@ Route::middleware('auth:sanctum')->put('/notifications/{id}/read', [Notification
 
 // ROTAS PÚBLICAS CONTINUADAS
 Route::get('/donations', [DonationController::class, 'index']);
+
 Route::get('/donations/{id}', [DonationController::class, 'show']);
+
+
 
 // ROTAS PROTEGIDAS GLOBAIS
 Route::middleware('auth:sanctum')->group(function () {
     Route::get('/user', [AuthController::class, 'getUser']);
     Route::post('/donations', [DonationController::class, 'newDonation']);
+    Route::put('/donations/{id}/decision', [DonationController::class, 'approveOrRejectDonations']);
     Route::post('/volunteer-requests', [VolunteerRequestController::class, 'store']);
     Route::get('/volunteer-requests/getAll', [VolunteerRequestController::class, 'getAll']);
     Route::get('/volunteer-requests/getPedding', [VolunteerRequestController::class, 'getPedding']);
@@ -41,4 +45,8 @@ Route::middleware('auth:sanctum')->group(function () {
     Route::put('/donations/{id}/request', [DonationController::class, 'requestDonation']);
     Route::delete('/donations/{id}', [DonationController::class, 'destroy']);
     Route::put('/donations/{id}', [DonationController::class, 'update']); 
+    Route::get('/pending-donations', [DonationController::class, 'getPendingDonations']);    
+    Route::get('/orders-incollection', [DonationController::class, 'getOrdersIncollection']);
+    Route::put('/donations/{id}/delivering', [DonationController::class, 'markDelivering']);
+
 });
